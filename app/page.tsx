@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Factory, Leaf, ShieldCheck, Sparkles } from "lucide-react";
 import AiSolarSection from "@/components/ai-solar-section";
@@ -12,16 +11,6 @@ const pillars = [
 export default function Home() {
   return (
     <main>
-      <header className="site-header">
-        <Link href="/" className="brand" aria-label="Solarious Energy home">
-          <Image src="/solarious-logo.jpeg" alt="Solarious Energy" width={236} height={86} priority />
-        </Link>
-        <nav className="desktop-nav" aria-label="Primary navigation">
-          <Link className="active" href="/">Home</Link><Link href="/#about">About</Link><Link href="/products">Products</Link><Link href="/#manufacturing">Manufacturing</Link><Link href="/#technology">Technology</Link><Link href="/resources">Resources</Link><Link href="/contact">Contact</Link>
-        </nav>
-        <Link href="/contact#quote" className="button button-small">Get a quote <ArrowRight size={16} /></Link>
-      </header>
-
       <section className="hero" id="about">
         <div className="hero-copy">
           <p className="eyebrow"><span /> Advanced solar module manufacturing</p>

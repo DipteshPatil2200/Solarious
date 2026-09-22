@@ -1,0 +1,6 @@
+"use client";
+import { useMemo,useState } from "react";
+import { FileDown,Search } from "lucide-react";
+import { resourceCategories } from "@/data/site";
+import { Select,SelectContent,SelectItem,SelectTrigger,SelectValue } from "@/components/ui/select";
+export default function ResourceBrowser(){const [query,setQuery]=useState("");const [category,setCategory]=useState("all");const items=useMemo(()=>resourceCategories.filter(x=>(category==="all"||x===category)&&x.toLowerCase().includes(query.toLowerCase())),[category,query]);return <div className="resource-browser"><div className="resource-controls"><label><Search size={17}/><input aria-label="Search resources" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search downloads"/></label><Select value={category} onValueChange={setCategory}><SelectTrigger className="tool-select"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="all">All categories</SelectItem>{resourceCategories.map(x=><SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent></Select></div><div className="resource-grid">{items.map(x=><article key={x}><FileDown size={24}/><span>Resource category</span><h2>{x}</h2><p>Approved files will appear here after the company uploads and verifies them.</p><button disabled>Currently unavailable</button></article>)}</div></div>}

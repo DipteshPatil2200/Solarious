@@ -1,0 +1,5 @@
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, FileDown } from "lucide-react";
+import type { Product } from "@/data/site";
+export default function ProductCard({product}:{product:Product}){return <article className="product-card"><div className="product-image"><Image src={product.image} alt={`${product.name} solar modules`} fill sizes="(max-width: 760px) 100vw, 33vw"/></div><div className="product-body"><span>{product.technology}</span><h2>{product.name} Modules</h2><p>{product.summary}</p><dl><div><dt>Efficiency</dt><dd>Confirm with technical team</dd></div><div><dt>Power range</dt><dd>Configurable</dd></div><div><dt>Applications</dt><dd>{product.applications.join(', ')}</dd></div></dl><ul>{product.features.map(x=><li key={x}>{x}</li>)}</ul><div className="product-actions"><Link href={`/products/${product.slug}`}>View details <ArrowRight size={15}/></Link><Link href="/resources"><FileDown size={15}/> Datasheet</Link><Link href={`/quote?product=${product.slug}`}>Request quote</Link></div></div></article>}
