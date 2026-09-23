@@ -32,3 +32,23 @@ export const productOverrides = sqliteTable("product_overrides", {
   published: integer("published", { mode: "boolean" }).notNull().default(true),
   updatedAt: text("updated_at").notNull(),
 });
+
+export const resources = sqliteTable("resources", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  category: text("category").notNull(),
+  product: text("product").notNull().default(""),
+  fileKey: text("file_key").notNull(),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  thumbnailKey: text("thumbnail_key"),
+  published: integer("published", { mode: "boolean" }).notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [
+  index("idx_resources_published_order").on(table.published, table.displayOrder),
+  index("idx_resources_category").on(table.category),
+]);
