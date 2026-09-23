@@ -1,2 +1,2 @@
-import { NextResponse } from "next/server";import { env } from "cloudflare:workers";
+import { NextResponse } from "next/server";import { runtimeEnv as env } from "@/lib/runtime-env";
 export async function GET(){try{const rows=await env.DB.prepare("SELECT id,title,description,category,product,file_name,file_type,file_size,published,display_order,created_at,updated_at FROM resources WHERE published=1 ORDER BY display_order ASC, created_at DESC").all();return NextResponse.json({resources:rows.results})}catch(error){console.error("Resources unavailable",error);return NextResponse.json({resources:[]},{status:503})}}

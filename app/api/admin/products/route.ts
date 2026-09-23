@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { env } from "cloudflare:workers";
+import { runtimeEnv as env } from "@/lib/runtime-env";
 import { getAdminUser } from "@/lib/admin-auth";
 import { getSiteProducts } from "@/lib/site-products";
 

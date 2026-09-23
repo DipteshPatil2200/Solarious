@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { env } from "cloudflare:workers";
+import { runtimeEnv as env } from "@/lib/runtime-env";
 import { getAdminUser } from "@/lib/admin-auth";
 
 async function authorized() { return Boolean(await getAdminUser()); }

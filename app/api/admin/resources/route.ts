@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";import { env } from "cloudflare:workers";import { getAdminUser } from "@/lib/admin-auth";
+import { NextResponse } from "next/server";import { runtimeEnv as env } from "@/lib/runtime-env";import { getAdminUser } from "@/lib/admin-auth";
 const categories=["Product Datasheets","Brochures","Warranty Documents","Certificates","Installation Guides","Maintenance Guides","Company Profile","Technical Documents"];
 const allowed=new Set(["application/pdf","application/msword","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]);const max=20*1024*1024;
 const clean=(v:FormDataEntryValue|null,n=500)=>typeof v==="string"?v.trim().slice(0,n):"";

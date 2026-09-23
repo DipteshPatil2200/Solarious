@@ -22,7 +22,7 @@ export default function AdminDashboard({ adminName }:{ adminName:string }) {
     try {
       const [iq,pq]=await Promise.all([fetch("/api/admin/inquiries"),fetch("/api/admin/products")]);
       if(!iq.ok||!pq.ok) throw new Error("Unable to load admin data");
-      const i=await iq.json(); const p=await pq.json();
+      const i=await iq.json() as {inquiries:Inquiry[]}; const p=await pq.json() as {products:Product[]};
       setInquiries(i.inquiries); setProducts(p.products);
     } catch { setNotice("Admin data is temporarily unavailable. Please retry."); }
     finally { setLoading(false); }
