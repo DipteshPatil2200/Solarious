@@ -1,0 +1,13 @@
+import { NextResponse } from "next/server";
+
+const answers=[
+  {keys:["topcon"],text:"TOPCon uses a tunnel-oxide passivated contact architecture and is commonly considered for performance-focused projects. Confirm current Solarious ratings and warranties with the technical team."},
+  {keys:["bifacial"],text:"Bifacial modules can use light reaching the rear surface. Results depend on mounting height, row spacing, ground reflectivity and site design, so a project assessment is recommended."},
+  {keys:["size","kw","requirement"],text:"A preliminary system size can be estimated from electricity use, usable area and local solar resource. Use the Solar Savings Calculator, then request an engineering assessment before making a purchase decision."},
+  {keys:["save","saving","bill"],text:"Savings depend on tariff, generation, self-consumption, system losses and local rules. Solarious calculator results are estimates and are not financial guarantees."},
+  {keys:["net meter","net metering"],text:"Net metering generally credits eligible exported solar electricity under applicable utility rules. Policies vary by location and can change; verify the latest requirements with your local distribution company."},
+  {keys:["document"],text:"Typical project discussions may require an electricity bill, site address, ownership or authorization details and roof information. Exact documents depend on the project and local process."},
+  {keys:["maintenance","clean"],text:"Solar plants typically need periodic visual inspection, safe module cleaning where required, electrical checks and performance monitoring. The correct schedule depends on site conditions and system design."},
+  {keys:["quote","expert","contact"],text:"Share your location, electricity usage or required capacity through the quotation form. The Solarious team can then review the requirement and recommend the next step."},
+];
+export async function POST(request:Request){try{const body=await request.json() as {message?:unknown};const message=typeof body.message==="string"?body.message.trim().slice(0,800):"";if(!message)return NextResponse.json({error:"Please enter a question."},{status:400});const lower=message.toLowerCase();const match=answers.find(item=>item.keys.some(key=>lower.includes(key)));return NextResponse.json({answer:match?.text??"I can help with solar basics, module technologies, preliminary sizing, savings estimates and the Solarious enquiry process. For verified product specifications or project commitments, please contact the Solarious technical team."});}catch{return NextResponse.json({error:"The assistant could not process that request."},{status:400})}}
