@@ -1,11 +1,14 @@
 export const company = {
-  legalName: "Mayureshwar Solar Energy Pvt. Ltd.",
+  legalName: "Mayureshwar Solar Energy Pvt Ltd",
   brand: "Solarious Energy",
-  email: "Contact details pending verification",
-  phone: "Contact details pending verification",
-  address: "Office and factory details pending verification",
-  website: "solarious-energy-corporate.dipteshpatil83.chatgpt.site",
-  hours: "Business hours pending verification",
+  email: "info@solariousenergy.in",
+  phone: null,
+  headOffice: "Plot No. T 3/4, MIDC Nardana Phase 2, Bhabalde Nardana, Dhule, Maharashtra – 425404, India",
+  manufacturingUnit: "Plot No. T 3/4, MIDC Nardana Phase 2, Bhabalde Nardana, Dhule, Maharashtra – 425404, India",
+  address: "Plot No. T 3/4, MIDC Nardana Phase 2, Bhabalde Nardana, Dhule, Maharashtra – 425404, India",
+  website: "www.solariousenergy.in",
+  websiteUrl: "http://www.solariousenergy.in",
+  tagline: "Clean Energy.. Pure World!",
   description: "Solar module manufacturing and engineering support for commercial, industrial and utility-scale applications.",
 };
 
