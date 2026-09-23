@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, Factory, Leaf, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Leaf, ShieldCheck, Sparkles } from "lucide-react";
 import AiSolarSection from "@/components/ai-solar-section";
+import HeroSlider from "@/components/hero-slider";
+import { getHeroBanners } from "@/lib/hero-banners";
 
 const pillars = [
   { number: "01", title: "Premium Quality", text: "Every module is designed around disciplined inspection, dependable materials and traceable quality checks.", icon: ShieldCheck },
@@ -8,24 +10,11 @@ const pillars = [
   { number: "03", title: "Sustainable Progress", text: "Efficient manufacturing and durable solar solutions help projects move toward lower-carbon energy.", icon: Leaf },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const banners = await getHeroBanners();
   return (
     <main>
-      <section className="hero" id="about">
-        <div className="hero-copy">
-          <p className="eyebrow"><span /> Advanced solar module manufacturing</p>
-          <h1>Clean energy.<br /><em>Pure world.</em></h1>
-          <p className="hero-lede">Solarious Energy builds high-efficiency solar modules for EPC companies, developers and renewable-energy projects—backed by a focus on engineering, quality and responsive technical support.</p>
-          <div className="hero-actions"><Link className="button" href="/products">Explore products <ArrowRight size={18} /></Link><Link className="button button-ghost" href="/contact#quote">Talk to our team</Link></div>
-          <div className="ai-indicator"><Sparkles size={16} /><span><strong>AI-Enabled Solar Solutions</strong><small>Digital guidance for product discovery and project planning</small></span></div>
-          <p className="data-note">Technical specifications and company statistics are published only after verification.</p>
-        </div>
-        <div className="hero-visual" aria-label="Solar module installation">
-          <div className="hero-sun" />
-          <div className="panel-grid" aria-hidden="true">{Array.from({ length: 24 }).map((_, i) => <span key={i} />)}</div>
-          <div className="hero-tag"><Factory size={19} /><span><strong>Made for real projects</strong><small>Commercial · Industrial · Utility</small></span></div>
-        </div>
-      </section>
+      <HeroSlider banners={banners}/>
 
       <section className="trust-strip" aria-label="Key capabilities">
         <p>Project-focused engineering</p><p>Multi-technology portfolio</p><p>Technical sales support</p><p>Configurable specifications</p>

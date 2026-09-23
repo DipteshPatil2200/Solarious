@@ -52,3 +52,18 @@ export const resources = sqliteTable("resources", {
   index("idx_resources_published_order").on(table.published, table.displayOrder),
   index("idx_resources_category").on(table.category),
 ]);
+
+export const heroBanners = sqliteTable("hero_banners", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  imageKey: text("image_key"),
+  imageUrl: text("image_url").notNull(),
+  altText: text("alt_text").notNull(),
+  headline: text("headline").notNull().default("Clean energy. Pure world."),
+  supportingText: text("supporting_text").notNull().default(""),
+  ctaLabel: text("cta_label").notNull().default("Explore products"),
+  ctaHref: text("cta_href").notNull().default("/products"),
+  published: integer("published", { mode: "boolean" }).notNull().default(false),
+  displayOrder: integer("display_order").notNull().default(0),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [index("idx_hero_banners_published_order").on(table.published, table.displayOrder)]);
