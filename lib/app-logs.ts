@@ -1,0 +1,2 @@
+import "server-only";import {runtimeEnv as env} from "@/lib/runtime-env";
+export async function writeAppLog(logType:string,level:string,message:string,metadata:Record<string,unknown>={}){try{const data=JSON.stringify(metadata),sizeBytes=new TextEncoder().encode(`${logType}${level}${message}${data}`).byteLength;await env.DB.prepare("INSERT INTO application_logs(log_type,level,message,metadata,size_bytes,created_at) VALUES(?,?,?,?,?,?)").bind(logType,level,message,data,sizeBytes,new Date().toISOString()).run()}catch{/* logging must never break the primary request */}}

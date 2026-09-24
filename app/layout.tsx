@@ -4,6 +4,7 @@ import "./resource-admin.css";
 import "./form-fixes.css";
 import "./company-details.css";
 import "./hero-slider.css";
+import "./log-management.css";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import FloatingAssistant from "@/components/floating-assistant";

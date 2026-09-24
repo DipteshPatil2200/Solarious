@@ -67,3 +67,29 @@ export const heroBanners = sqliteTable("hero_banners", {
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 }, (table) => [index("idx_hero_banners_published_order").on(table.published, table.displayOrder)]);
+
+export const adminUsers = sqliteTable("admin_users", {
+  userId: text("user_id").primaryKey(),
+  email: text("email").notNull(),
+  role: text("role").notNull().default("admin"),
+  createdAt: text("created_at").notNull(),
+});
+
+export const applicationLogs = sqliteTable("application_logs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  logType: text("log_type").notNull(),
+  level: text("level").notNull().default("info"),
+  message: text("message").notNull(),
+  metadata: text("metadata").notNull().default("{}"),
+  sizeBytes: integer("size_bytes").notNull(),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("idx_application_logs_created_at").on(table.createdAt), index("idx_application_logs_type").on(table.logType)]);
+
+export const auditEvents = sqliteTable("audit_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  actorUserId: text("actor_user_id").notNull(),
+  actorEmail: text("actor_email").notNull(),
+  action: text("action").notNull(),
+  details: text("details").notNull().default("{}"),
+  createdAt: text("created_at").notNull(),
+}, (table) => [index("idx_audit_events_created_at").on(table.createdAt)]);
