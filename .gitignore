@@ -14,7 +14,10 @@
 /coverage
 
 # build output
-/build/
+# `build/sites-vite-plugin.ts` is required build configuration source.
+/build/*
+!/build/sites-vite-plugin.ts
+!/build/sites-vite-plugin.LICENSE
 /dist/
 
 # next.js
