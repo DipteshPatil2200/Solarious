@@ -1,5 +1,6 @@
 import vinext from "vinext";
-import { defineConfig } from "vite";
+import { resolve } from "node:path";
+import { defineConfig, type Plugin } from "vite";
 import hostingConfig from "./.openai/hosting.json";
 import { readExecutionProfile } from "./scripts/execution-profile.mjs";
 import { sites } from "./build/sites-vite-plugin";
@@ -36,6 +37,33 @@ const localBindingConfig = {
 };
 
 export default defineConfig(async () => {
+  const isVercel =
+    process.env.VERCEL === "1" ||
+    process.env.SOLARIOUS_VERCEL_BUILD === "1";
+
+  if (isVercel) {
+    // Pin Nitro's target before clearing Vercel's generic build flag. Keeping
+    // `VERCEL=1` in Vite's nested RSC builds makes its CSS import resolver
+    // treat package imports as filesystem paths (for example `/tailwindcss`).
+    process.env.NITRO_PRESET ??= "vercel";
+    process.env.SOLARIOUS_VERCEL_BUILD = "1";
+    delete process.env.VERCEL;
+    const { nitro } = await import("nitro/vite");
+    const plugins: Plugin[] = [vinext(), nitro({ noExternals: true })];
+
+    return {
+      resolve: {
+        alias: {
+          "cloudflare:workers": resolve(
+            process.cwd(),
+            "lib/vercel-cloudflare-shim.ts",
+          ),
+        },
+      },
+      plugins,
+    };
+  }
+
   // Use Miniflare's local Request.cf placeholder unless fetching is requested.
   process.env.CLOUDFLARE_CF_FETCH_ENABLED ??= "false";
   process.env.WRANGLER_SEND_METRICS ??= "false";
