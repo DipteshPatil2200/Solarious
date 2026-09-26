@@ -93,3 +93,32 @@ export const auditEvents = sqliteTable("audit_events", {
   details: text("details").notNull().default("{}"),
   createdAt: text("created_at").notNull(),
 }, (table) => [index("idx_audit_events_created_at").on(table.createdAt)]);
+
+export const creativeBrandSettings = sqliteTable("creative_brand_settings", {
+  id: integer("id").primaryKey().default(1),
+  companyName: text("company_name").notNull().default("Solarious Energy"),
+  email: text("email").notNull().default("info@solariousenergy.in"),
+  mobile: text("mobile").notNull().default(""),
+  website: text("website").notNull().default("www.solariousenergy.in"),
+  defaultCta: text("default_cta").notNull().default("Contact Us Today"),
+  logoKey: text("logo_key"),
+  logoType: text("logo_type"),
+  showEmail: integer("show_email", { mode: "boolean" }).notNull().default(true),
+  showMobile: integer("show_mobile", { mode: "boolean" }).notNull().default(false),
+  showWebsite: integer("show_website", { mode: "boolean" }).notNull().default(true),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const solarCreatives = sqliteTable("solar_creatives", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  creativeDate: text("creative_date").notNull().unique(),
+  theme: text("theme").notNull().unique(),
+  headline: text("headline").notNull().unique(),
+  caption: text("caption").notNull().unique(),
+  imageKey: text("image_key").notNull(),
+  imageType: text("image_type").notNull().default("image/svg+xml"),
+  imageSize: integer("image_size").notNull(),
+  status: text("status").notNull().default("draft"),
+  createdAt: text("created_at").notNull(),
+  updatedAt: text("updated_at").notNull(),
+}, (table) => [index("idx_solar_creatives_created_at").on(table.createdAt)]);
