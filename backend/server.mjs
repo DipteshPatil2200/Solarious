@@ -13,7 +13,7 @@ import {randomUUID} from "node:crypto";
 import {connectDatabase,databaseStatus,disconnectDatabase,mongoose} from "./db.mjs";
 
 const required = name => { const value=process.env[name]?.trim(); if(!value) throw new Error(`${name} is required`); return value; };
-required("MONGODB_URI");const dbName=process.env.DB_NAME?.trim()||"solarious",port=Number(process.env.PORT||4000);
+required("MONGODB_URI");required("ADMIN_API_TOKEN");const dbName=process.env.DB_NAME?.trim()||"solarious",port=Number(process.env.PORT||4000);
 const origins=(process.env.FRONTEND_ORIGINS||"").split(",").map(x=>x.trim()).filter(Boolean);
 if(!origins.length) throw new Error("FRONTEND_ORIGINS is required");
 await connectDatabase();

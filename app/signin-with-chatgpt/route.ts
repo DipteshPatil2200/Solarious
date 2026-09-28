@@ -14,7 +14,7 @@ export async function GET(request:Request){const url=new URL(request.url),return
 
 export async function POST(request:Request){
   const form=await request.formData(),username=String(form.get("username")??""),password=String(form.get("password")??""),returnTo=safeReturnTo(String(form.get("return_to")??"/admin")),expected=adminCredentials();
-  if(!expected.username||!expected.password)return new NextResponse(page(returnTo,"Admin login is not configured."),{status:503,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}});
+  if(!expected.password)return new NextResponse(page(returnTo,"Admin login is not configured: ADMIN_PASSWORD is missing on this frontend service."),{status:503,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}});
   if(username!==expected.username||password!==expected.password)return new NextResponse(page(returnTo,"Incorrect username or password."),{status:401,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}});
   const response=NextResponse.redirect(new URL(returnTo,request.url),303);
   response.cookies.set(ADMIN_SESSION_COOKIE,createAdminSession(username),{httpOnly:true,sameSite:"lax",secure:new URL(request.url).protocol==="https:",path:"/",maxAge:adminSessionMaxAge()});

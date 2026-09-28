@@ -26,6 +26,8 @@ Set these server-side environment variables in Vercel:
 - `ADMIN_API_TOKEN` (must exactly match Render)
 - `NEXT_PUBLIC_SITE_URL=https://YOUR-PRODUCTION-FRONTEND-DOMAIN`
 
+For a Render-hosted frontend, set the same frontend variables on the web service that owns the public frontend URL, not on `solarious-api`. `ADMIN_USERNAME` defaults to `admin`; `ADMIN_PASSWORD` never has a code default. `ADMIN_API_TOKEN` must be identical on both services.
+
 This is a standard Next.js App Router application, not a React Router SPA. Do not add a blanket rewrite to `index.html`; Next.js handles filesystem routes, direct navigation, refreshes, and the server-side API forwarding route.
 
 ## MongoDB Atlas

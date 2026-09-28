@@ -21,7 +21,7 @@ export function backendApiUrl(): string {
 
 export function adminCredentials() {
   return {
-    username: serverValue("ADMIN_USERNAME"),
+    username: serverValue("ADMIN_USERNAME") || "admin",
     password: serverValue("ADMIN_PASSWORD"),
     apiToken: serverValue("ADMIN_API_TOKEN"),
   };
