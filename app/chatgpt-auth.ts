@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { adminCredentials } from "@/lib/server-config";
+import {ADMIN_SESSION_COOKIE,cookieValue,verifyAdminSession} from "@/lib/admin-session";
 
 export type ChatGPTUser = {
   userId: string;
@@ -43,6 +44,8 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
 function basicAdminUser(requestHeaders: Headers): ChatGPTUser | null {
   const { username: expectedUser, password: expectedPassword } =
     adminCredentials();
+  const sessionUser=verifyAdminSession(cookieValue(requestHeaders.get("cookie"),ADMIN_SESSION_COOKIE));
+  if(sessionUser&&sessionUser===expectedUser)return {userId:`session:${sessionUser}`,displayName:sessionUser,email:sessionUser,fullName:null};
   const authorization = requestHeaders.get("authorization");
 
   if (
