@@ -1,5 +1,4 @@
 import "server-only";
-import { env as runtimeEnv } from "cloudflare:workers";
 
 type ServerKey =
   | "BACKEND_API_URL"
@@ -8,18 +7,14 @@ type ServerKey =
   | "ADMIN_USERNAME"
   | "ADMIN_PASSWORD";
 
-const bindings = runtimeEnv as Record<string, string | undefined>;
-
 export function serverValue(key: ServerKey): string {
-  return (process.env[key] ?? bindings[key] ?? "").trim();
+  return (process.env[key] ?? "").trim();
 }
 
 export function backendApiUrl(): string {
-  const viteUrl = import.meta.env.VITE_API_URL as string | undefined;
   return (
     serverValue("BACKEND_API_URL") ||
     serverValue("VITE_API_URL") ||
-    viteUrl?.trim() ||
     ""
   ).replace(/\/$/, "");
 }

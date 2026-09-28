@@ -12,21 +12,21 @@ Required environment variables are listed in `backend/.env.example`. Configure t
 
 ## Vercel frontend
 
-- Framework preset: Other
+- Framework preset: Next.js
 - Root Directory: repository root
-- Install Command: `npm install`
+- Install Command: `npm ci`
 - Build Command: `npm run build`
 
 Set these server-side environment variables in Vercel:
 
-- `VITE_API_URL=https://YOUR-RENDER-SERVICE.onrender.com`
-- `BACKEND_API_URL=https://YOUR-RENDER-SERVICE.onrender.com` (same value; preferred server-side name)
+- `BACKEND_API_URL=https://YOUR-RENDER-SERVICE.onrender.com` (preferred)
+- `VITE_API_URL=https://YOUR-RENDER-SERVICE.onrender.com` (compatibility alias; optional when `BACKEND_API_URL` is set)
 - `ADMIN_USERNAME`
 - `ADMIN_PASSWORD`
 - `ADMIN_API_TOKEN` (must exactly match Render)
 - `NEXT_PUBLIC_SITE_URL=https://YOUR-PRODUCTION-FRONTEND-DOMAIN`
 
-This is a Vinext App Router application, not a React Router SPA. Do not add a blanket rewrite to `index.html`; the Vercel/Nitro build output handles filesystem routes, direct navigation, refreshes, and the server-side API forwarding route.
+This is a standard Next.js App Router application, not a React Router SPA. Do not add a blanket rewrite to `index.html`; Next.js handles filesystem routes, direct navigation, refreshes, and the server-side API forwarding route.
 
 ## MongoDB Atlas
 
