@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Inbox, Loader2, Package, RefreshCw, Save, Search, Trash2 } from "lucide-react";
 import type { Product } from "@/data/site";
+import { apiError } from "@/lib/api-error";
 import AdminResources from "@/components/admin-resources";
 import AdminHeroBanners from "@/components/admin-hero-banners";
 import AdminLogManagement from "@/components/admin-log-management";
@@ -24,10 +25,11 @@ export default function AdminDashboard({ adminName }:{ adminName:string }) {
     setLoading(true); setNotice("");
     try {
       const [iq,pq]=await Promise.all([fetch("/api/admin/inquiries"),fetch("/api/admin/products")]);
-      if(!iq.ok||!pq.ok) throw new Error("Unable to load admin data");
+      if(!iq.ok) throw await apiError(iq,"Enquiries could not be loaded");
+      if(!pq.ok) throw await apiError(pq,"Products could not be loaded");
       const i=await iq.json() as {inquiries:Inquiry[]}; const p=await pq.json() as {products:Product[]};
       setInquiries(i.inquiries); setProducts(p.products);
-    } catch { setNotice("Admin data is temporarily unavailable. Please retry."); }
+    } catch(error) { setNotice(error instanceof Error?error.message:"Admin data could not be loaded."); }
     finally { setLoading(false); }
   },[]);
   useEffect(()=>{const timer=window.setTimeout(()=>void load(),0);return()=>window.clearTimeout(timer)},[load]);

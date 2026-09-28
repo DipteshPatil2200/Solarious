@@ -7,6 +7,7 @@ import "./hero-slider.css";
 import "./log-management.css";
 import "./inner-pages.css";
 import "./quote-overrides.css";
+import "./usability.css";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import FloatingAssistant from "@/components/floating-assistant";
@@ -15,10 +16,10 @@ export const metadata: Metadata = {
   title: { default: "Solarious Energy | Solar Modules for Every Project", template: "%s | Solarious Energy" },
   description: "Explore Solarious Energy solar module technologies, manufacturing capabilities and project support.",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
-  metadataBase: new URL("https://solarious-energy-corporate.dipteshpatil83.chatgpt.site"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://www.solariousenergy.in"),
   openGraph: { type:"website", siteName:"Solarious Energy", title:"Solarious Energy", description:"Solar modules, manufacturing and project-focused engineering support." },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><SiteHeader />{children}<SiteFooter /><FloatingAssistant /></body></html>;
+  return <html lang="en"><body><a className="skip-link" href="#main-content">Skip to main content</a><SiteHeader /><div id="main-content">{children}</div><SiteFooter /><FloatingAssistant /></body></html>;
 }

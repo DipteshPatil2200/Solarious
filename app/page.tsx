@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Leaf, ShieldCheck, Sparkles } from "lucide-react";
 import AiSolarSection from "@/components/ai-solar-section";
 import HeroSlider from "@/components/hero-slider";
-import { getHeroBanners } from "@/lib/hero-banners";
+import { getProductionHeroBanners } from "@/lib/hero-banners";
 
 const pillars = [
   { number: "01", title: "Premium Quality", text: "Every module is designed around disciplined inspection, dependable materials and traceable quality checks.", icon: ShieldCheck },
@@ -11,7 +11,7 @@ const pillars = [
 ];
 
 export default async function Home() {
-  const banners = await getHeroBanners();
+  const banners = await getProductionHeroBanners();
   return (
     <main>
       <HeroSlider banners={banners}/>

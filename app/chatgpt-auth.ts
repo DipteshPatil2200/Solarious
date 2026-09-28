@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { adminCredentials } from "@/lib/server-config";
 
 export type ChatGPTUser = {
   userId: string;
@@ -22,7 +23,7 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   const requestHeaders = await headers();
   const userId = requestHeaders.get(USER_ID_HEADER);
   const email = requestHeaders.get(USER_EMAIL_HEADER);
-  if (!userId || !email) return null;
+  if (!userId || !email) return basicAdminUser(requestHeaders);
 
   const encodedFullName = requestHeaders.get(USER_FULL_NAME_HEADER);
   const fullName =
@@ -37,6 +38,43 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
     email,
     fullName,
   };
+}
+
+function basicAdminUser(requestHeaders: Headers): ChatGPTUser | null {
+  const { username: expectedUser, password: expectedPassword } =
+    adminCredentials();
+  const authorization = requestHeaders.get("authorization");
+
+  if (
+    !expectedUser ||
+    !expectedPassword ||
+    !authorization?.startsWith("Basic ")
+  ) {
+    return null;
+  }
+
+  try {
+    const decoded = Buffer.from(authorization.slice(6), "base64").toString(
+      "utf8",
+    );
+    const separator = decoded.indexOf(":");
+    if (
+      separator < 1 ||
+      decoded.slice(0, separator) !== expectedUser ||
+      decoded.slice(separator + 1) !== expectedPassword
+    ) {
+      return null;
+    }
+
+    return {
+      userId: `basic:${expectedUser}`,
+      displayName: expectedUser,
+      email: expectedUser,
+      fullName: null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function requireChatGPTUser(

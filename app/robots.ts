@@ -1,1 +1,1 @@
-import type { MetadataRoute } from "next";export default function robots():MetadataRoute.Robots{return{rules:{userAgent:"*",allow:"/"},sitemap:"https://solarious-energy-corporate.dipteshpatil83.chatgpt.site/sitemap.xml"}}
+import type { MetadataRoute } from "next";export default function robots():MetadataRoute.Robots{const base=(process.env.NEXT_PUBLIC_SITE_URL||"https://www.solariousenergy.in").replace(/\/$/,"");return{rules:{userAgent:"*",allow:"/",disallow:["/admin","/api/admin"]},sitemap:`${base}/sitemap.xml`}}

@@ -1,6 +1,6 @@
 import vinext from "vinext";
 import { resolve } from "node:path";
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import hostingConfig from "./.openai/hosting.json";
 import { readExecutionProfile } from "./scripts/execution-profile.mjs";
 import { sites } from "./build/sites-vite-plugin";
@@ -36,7 +36,8 @@ const localBindingConfig = {
     : [],
 };
 
-export default defineConfig(async () => {
+export default defineConfig(async ({ mode }) => {
+  const localEnv = loadEnv(mode, process.cwd(), "");
   const isVercel =
     process.env.VERCEL === "1" ||
     process.env.SOLARIOUS_VERCEL_BUILD === "1";
@@ -89,7 +90,20 @@ export default defineConfig(async () => {
       cloudflare({
         viteEnvironment: { name: "rsc", childEnvironments: ["ssr"] },
         inspectorPort: false,
-        config: localBindingConfig,
+        config: {
+          ...localBindingConfig,
+          vars: Object.fromEntries(
+            [
+              "VITE_API_URL",
+              "BACKEND_API_URL",
+              "ADMIN_API_TOKEN",
+              "ADMIN_USERNAME",
+              "ADMIN_PASSWORD",
+            ]
+              .map((key) => [key, localEnv[key] || process.env[key]])
+              .filter((entry): entry is [string, string] => Boolean(entry[1])),
+          ),
+        },
       }),
     ],
   };

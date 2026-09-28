@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: solarious-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.22.0
+      - key: DB_NAME
+        value: solarious
+      - key: MONGODB_URI
+        sync: false
+      - key: FRONTEND_ORIGINS
+        sync: false
+      - key: ADMIN_API_TOKEN
+        generateValue: true
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_IMAGE_MODEL
+        value: gpt-image-1
+      - key: CRON_SECRET
+        generateValue: true

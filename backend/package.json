@@ -1,0 +1,23 @@
+{
+  "name": "solarious-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20 <23"
+  },
+  "scripts": {
+    "build": "node --check server.mjs",
+    "start": "node server.mjs",
+    "migrate:d1": "node scripts/import-d1-export.mjs"
+  },
+  "dependencies": {
+    "cloudinary": "^2.11.0",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "mongoose": "^9.1.5",
+    "multer": "^2.4.0"
+  }
+}
