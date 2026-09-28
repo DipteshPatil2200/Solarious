@@ -9,7 +9,7 @@ import AdminHeroBanners from "@/components/admin-hero-banners";
 import AdminLogManagement from "@/components/admin-log-management";
 import AdminAiCreatives from "@/components/admin-ai-creatives";
 
-type Inquiry = { id:number; kind:string; name:string; company:string; email:string; phone:string; product:string; capacity:string; location:string; message:string; details:string; status:string; created_at:string };
+type Inquiry = { id:string; kind:string; name:string; company:string; email:string; phone:string; product:string; capacity:string; location:string; message:string; details:string; status:string; created_at:string };
 const statuses = ["new", "contacted", "qualified", "closed"];
 
 export default function AdminDashboard({ adminName }:{ adminName:string }) {
@@ -35,8 +35,8 @@ export default function AdminDashboard({ adminName }:{ adminName:string }) {
   useEffect(()=>{const timer=window.setTimeout(()=>void load(),0);return()=>window.clearTimeout(timer)},[load]);
 
   const filtered=useMemo(()=>inquiries.filter(item=>`${item.name} ${item.company} ${item.email} ${item.phone} ${item.message}`.toLowerCase().includes(query.toLowerCase())),[inquiries,query]);
-  const updateStatus=async(id:number,status:string)=>{await fetch("/api/admin/inquiries",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status})});setInquiries(v=>v.map(x=>x.id===id?{...x,status}:x));};
-  const removeInquiry=async(id:number)=>{if(!confirm("Delete this inquiry permanently?"))return;const r=await fetch(`/api/admin/inquiries?id=${id}`,{method:"DELETE"});if(r.ok)setInquiries(v=>v.filter(x=>x.id!==id));};
+  const updateStatus=async(id:string,status:string)=>{const response=await fetch("/api/admin/inquiries",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status})});if(response.ok)setInquiries(v=>v.map(x=>x.id===id?{...x,status}:x));else setNotice(await response.text()||"Inquiry status could not be updated.");};
+  const removeInquiry=async(id:string)=>{if(!confirm("Delete this inquiry permanently?"))return;const r=await fetch(`/api/admin/inquiries?id=${id}`,{method:"DELETE"});if(r.ok)setInquiries(v=>v.filter(x=>x.id!==id));else setNotice(await r.text()||"Inquiry could not be deleted.");};
   const saveProduct=async(e:React.FormEvent<HTMLFormElement>)=>{e.preventDefault();if(!editing)return;const r=await fetch("/api/admin/products",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(editing)});if(r.ok){setProducts(v=>v.map(x=>x.slug===editing.slug?editing:x));setNotice("Product changes saved and are live on the product pages.");setEditing(null);}else setNotice("Product could not be saved.");};
 
   return <main className="admin-page">

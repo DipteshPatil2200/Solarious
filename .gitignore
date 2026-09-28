@@ -36,6 +36,7 @@ yarn-error.log*
 .pnpm-debug.log*
 *.log
 logs/
+backend/uploads/
 
 # env files (can opt-in for committing if needed)
 .env*
