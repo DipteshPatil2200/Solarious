@@ -6,8 +6,8 @@ export const ADMIN_SESSION_COOKIE="solarious_admin_session";
 const SESSION_SECONDS=8*60*60;
 
 function secret(){
-  const {apiToken}=adminCredentials();
-  return apiToken;
+  const {apiToken,password}=adminCredentials();
+  return apiToken||password;
 }
 
 function signature(value:string){
