@@ -16,7 +16,7 @@ export function backendApiUrl(): string {
     serverValue("BACKEND_API_URL") ||
     serverValue("VITE_API_URL") ||
     ""
-  ).replace(/\/$/, "");
+  ).replace(/\/+$/, "");
 }
 
 export function adminCredentials() {
