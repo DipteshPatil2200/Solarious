@@ -35,6 +35,10 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 *.log
+backups/
+backend/backups/
+*.archive
+*.archive.gz
 logs/
 backend/uploads/
 

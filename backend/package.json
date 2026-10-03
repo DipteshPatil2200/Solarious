@@ -7,9 +7,12 @@
     "node": ">=20 <23"
   },
   "scripts": {
-    "build": "node --check server.mjs",
+    "build": "node --check server.mjs && node --check db.mjs && node --check scripts/migrate-local-mongodb-to-atlas.mjs && node --check scripts/smoke-test.mjs",
     "start": "node --env-file-if-exists=.env server.mjs",
-    "migrate:d1": "node scripts/import-d1-export.mjs"
+    "test:smoke": "node --env-file-if-exists=.env scripts/smoke-test.mjs",
+    "migrate:d1": "node scripts/import-d1-export.mjs",
+    "migrate:mongo:plan": "node scripts/migrate-local-mongodb-to-atlas.mjs",
+    "migrate:mongo": "node scripts/migrate-local-mongodb-to-atlas.mjs --execute"
   },
   "dependencies": {
     "cloudinary": "^2.11.0",

@@ -8,7 +8,7 @@
 - Health Check: `/api/health`
 - Node: `22.22.0`
 
-Required environment variables are listed in `backend/.env.example`. Configure them in Render; never commit their real values. `MONGODB_URI` must be an Atlas SRV URI and `DB_NAME` should remain `solarious`. `FRONTEND_ORIGINS` is a comma-separated allowlist of the production Vercel/custom frontend origins.
+Required environment variables are listed in `backend/.env.example`. Configure them in Render; never commit their real values. `MONGODB_URI` must be the Atlas SRV URI for `cluster.il8ftxi.mongodb.net` and `DB_NAME` should remain `solarious`. `FRONTEND_ORIGINS` is a comma-separated allowlist of the production Vercel/custom frontend origins (currently `https://solarious-five.vercel.app`).
 
 ## Vercel frontend
 
@@ -35,8 +35,12 @@ This is a standard Next.js App Router application, not a React Router SPA. Do no
 1. Create the `solarious` database and a least-privilege database user.
 2. Allow Render outbound access using the Atlas network access controls appropriate for the service.
 3. Set the SRV connection string only in Render as `MONGODB_URI`.
-4. Export existing D1 rows to JSON and run `npm run migrate:d1 -- path/to/d1-export.json` from `backend/` with `MONGODB_URI` configured.
-5. Existing R2 objects must be copied to Cloudinary separately; database documents store URLs/storage IDs only and never binary/Base64 files.
+4. Install MongoDB Database Tools (`mongodump` and `mongorestore`) on the trusted migration workstation.
+5. From `backend/`, set `ATLAS_MONGODB_URI`, keep `LOCAL_MONGODB_URI` pointed at local MongoDB, and run `npm run migrate:mongo:plan`. This dry-run changes no data and prints no credentials.
+6. Run `npm run migrate:mongo` only after reviewing the plan. It creates BSON backups of both the local database and the current Atlas database before restore. It refuses to restore when Atlas contains any records and never uses `--drop`.
+7. Keep the generated `backups/` directory outside Git and retain it until production verification is complete.
+8. The older D1 importer remains available as `npm run migrate:d1 -- path/to/d1-export.json` only for a separately reviewed D1 export.
+9. Existing R2 objects must be copied to Cloudinary separately; database documents store URLs/storage IDs only and never binary/Base64 files.
 
 ### MongoDB Compass
 
