@@ -96,9 +96,6 @@ export default defineConfig(async ({ mode }) => {
             [
               "VITE_API_URL",
               "BACKEND_API_URL",
-              "ADMIN_API_TOKEN",
-              "ADMIN_USERNAME",
-              "ADMIN_PASSWORD",
             ]
               .map((key) => [key, localEnv[key] || process.env[key]])
               .filter((entry): entry is [string, string] => Boolean(entry[1])),

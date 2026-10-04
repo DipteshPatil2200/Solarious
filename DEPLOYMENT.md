@@ -8,7 +8,7 @@
 - Health Check: `/api/health`
 - Node: `22.22.0`
 
-Required environment variables are listed in `backend/.env.example`. Configure them in Render; never commit their real values. `MONGODB_URI` must be the Atlas SRV URI for `cluster.il8ftxi.mongodb.net` and `DB_NAME` should remain `solarious`. `FRONTEND_ORIGINS` is a comma-separated allowlist of the production Vercel/custom frontend origins (currently `https://solarious-five.vercel.app`).
+Required environment variables are listed in `backend/.env.example`. Configure them in Render; never commit their real values. `MONGODB_URI` must be the Atlas SRV URI for `cluster.il8ftxi.mongodb.net` and `DB_NAME` should remain `solarious`. `FRONTEND_ORIGINS` is a comma-separated allowlist of the production Vercel/custom frontend origins.
 
 ## Vercel frontend
 
@@ -19,14 +19,11 @@ Required environment variables are listed in `backend/.env.example`. Configure t
 
 Set these server-side environment variables in Vercel:
 
-- `BACKEND_API_URL=https://YOUR-RENDER-SERVICE.onrender.com` (preferred)
-- `VITE_API_URL=https://YOUR-RENDER-SERVICE.onrender.com` (compatibility alias; optional when `BACKEND_API_URL` is set)
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD`
-- `ADMIN_API_TOKEN` (must exactly match Render)
+- `BACKEND_API_URL=https://YOUR-RENDER-SERVICE.onrender.com`
+- `VITE_API_URL=https://YOUR-RENDER-SERVICE.onrender.com` (supported server-side compatibility alias; no secret belongs in this variable)
 - `NEXT_PUBLIC_SITE_URL=https://YOUR-PRODUCTION-FRONTEND-DOMAIN`
 
-For a Render-hosted frontend, set the same frontend variables on the web service that owns the public frontend URL, not on `solarious-api`. `ADMIN_USERNAME` and `ADMIN_PASSWORD` have no production code defaults. `ADMIN_API_TOKEN` must be identical on both services. `BACKEND_API_URL` must contain only the backend origin (for example, `https://service.onrender.com`) and must not end in `/api`.
+Do not configure admin credentials or a permanent backend token on Vercel. The browser signs in through the frontend route, Render validates the server-side `ADMIN_USERNAME` and `ADMIN_PASSWORD`, and Render returns a signed, short-lived HttpOnly cookie. `BACKEND_API_URL` must contain only the backend origin and must not end in `/api`.
 
 This is a standard Next.js App Router application, not a React Router SPA. Do not add a blanket rewrite to `index.html`; Next.js handles filesystem routes, direct navigation, refreshes, and the server-side API forwarding route.
 

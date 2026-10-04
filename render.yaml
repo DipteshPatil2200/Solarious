@@ -18,7 +18,9 @@ services:
         sync: false
       - key: FRONTEND_ORIGINS
         sync: false
-      - key: ADMIN_API_TOKEN
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
         sync: false
       - key: CLOUDINARY_URL
         sync: false

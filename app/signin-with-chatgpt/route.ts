@@ -1,6 +1,5 @@
 import {NextResponse} from "next/server";
-import {adminCredentials} from "@/lib/server-config";
-import {ADMIN_SESSION_COOKIE,adminSessionMaxAge,createAdminSession} from "@/lib/admin-session";
+import {backendApiUrl} from "@/lib/server-config";
 
 export const dynamic="force-dynamic";
 
@@ -14,10 +13,15 @@ function page(returnTo:string,error=""){
 export async function GET(request:Request){const url=new URL(request.url),returnTo=safeReturnTo(url.searchParams.get("return_to"));return new NextResponse(page(returnTo),{headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}})}
 
 export async function POST(request:Request){
-  const form=await request.formData(),username=String(form.get("username")??""),password=String(form.get("password")??""),returnTo=safeReturnTo(String(form.get("return_to")??"/admin")),expected=adminCredentials();
-  if(!expected.password)return new NextResponse(page(returnTo,"Admin login is not configured: ADMIN_PASSWORD is missing on this frontend service."),{status:503,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}});
-  if(username!==expected.username||password!==expected.password)return new NextResponse(page(returnTo,"Incorrect username or password."),{status:401,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}});
+  const form=await request.formData(),username=String(form.get("username")??""),password=String(form.get("password")??""),returnTo=safeReturnTo(String(form.get("return_to")??"/admin")),base=backendApiUrl();
+  if(!base)return new NextResponse(page(returnTo,"Admin service is not configured."),{status:503,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}});
+  let backendResponse:Response;
+  try{backendResponse=await fetch(`${base}/api/admin/login`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password}),cache:"no-store"})}
+  catch{return new NextResponse(page(returnTo,"Admin service is temporarily unavailable."),{status:503,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}})}
+  if(!backendResponse.ok)return new NextResponse(page(returnTo,backendResponse.status===401?"Incorrect username or password.":"Admin service is temporarily unavailable."),{status:backendResponse.status===401?401:503,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}});
+  const sessionCookie=backendResponse.headers.get("set-cookie");
+  if(!sessionCookie)return new NextResponse(page(returnTo,"Admin service did not create a secure session."),{status:502,headers:{"Content-Type":"text/html; charset=utf-8","Cache-Control":"no-store"}});
   const response=NextResponse.redirect(new URL(returnTo,publicOrigin(request)),303);
-  response.cookies.set(ADMIN_SESSION_COOKIE,createAdminSession(username),{httpOnly:true,sameSite:"lax",secure:new URL(request.url).protocol==="https:",path:"/",maxAge:adminSessionMaxAge()});
+  response.headers.append("set-cookie",sessionCookie);
   return response;
 }

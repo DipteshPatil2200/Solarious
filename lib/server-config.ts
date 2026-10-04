@@ -2,10 +2,7 @@ import "server-only";
 
 type ServerKey =
   | "BACKEND_API_URL"
-  | "VITE_API_URL"
-  | "ADMIN_API_TOKEN"
-  | "ADMIN_USERNAME"
-  | "ADMIN_PASSWORD";
+  | "VITE_API_URL";
 
 export function serverValue(key: ServerKey): string {
   return (process.env[key] ?? "").trim();
@@ -39,12 +36,4 @@ export function backendApiUrl(): string {
     });
     return "";
   }
-}
-
-export function adminCredentials() {
-  return {
-    username: serverValue("ADMIN_USERNAME"),
-    password: serverValue("ADMIN_PASSWORD"),
-    apiToken: serverValue("ADMIN_API_TOKEN"),
-  };
 }

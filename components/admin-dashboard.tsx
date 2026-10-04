@@ -1,5 +1,6 @@
 "use client";
 
+import {adminFetch} from "@/lib/admin-fetch";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Inbox, Loader2, Package, RefreshCw, Save, Search, Trash2 } from "lucide-react";
 import type { Product } from "@/data/site";
@@ -24,7 +25,7 @@ export default function AdminDashboard({ adminName }:{ adminName:string }) {
   const load=useCallback(async()=>{
     setLoading(true); setNotice("");
     try {
-      const [iq,pq]=await Promise.all([fetch("/api/admin/inquiries"),fetch("/api/admin/products")]);
+      const [iq,pq]=await Promise.all([adminFetch("/api/admin/inquiries"),adminFetch("/api/admin/products")]);
       if(!iq.ok) throw await apiError(iq,"Enquiries could not be loaded");
       if(!pq.ok) throw await apiError(pq,"Products could not be loaded");
       const i=await iq.json() as {inquiries:Inquiry[]}; const p=await pq.json() as {products:Product[]};
@@ -35,9 +36,9 @@ export default function AdminDashboard({ adminName }:{ adminName:string }) {
   useEffect(()=>{const timer=window.setTimeout(()=>void load(),0);return()=>window.clearTimeout(timer)},[load]);
 
   const filtered=useMemo(()=>inquiries.filter(item=>`${item.name} ${item.company} ${item.email} ${item.phone} ${item.message}`.toLowerCase().includes(query.toLowerCase())),[inquiries,query]);
-  const updateStatus=async(id:string,status:string)=>{const response=await fetch("/api/admin/inquiries",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status})});if(response.ok)setInquiries(v=>v.map(x=>x.id===id?{...x,status}:x));else setNotice(await response.text()||"Inquiry status could not be updated.");};
-  const removeInquiry=async(id:string)=>{if(!confirm("Delete this inquiry permanently?"))return;const r=await fetch(`/api/admin/inquiries?id=${id}`,{method:"DELETE"});if(r.ok)setInquiries(v=>v.filter(x=>x.id!==id));else setNotice(await r.text()||"Inquiry could not be deleted.");};
-  const saveProduct=async(e:React.FormEvent<HTMLFormElement>)=>{e.preventDefault();if(!editing)return;const r=await fetch("/api/admin/products",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(editing)});if(r.ok){setProducts(v=>v.map(x=>x.slug===editing.slug?editing:x));setNotice("Product changes saved and are live on the product pages.");setEditing(null);}else setNotice("Product could not be saved.");};
+  const updateStatus=async(id:string,status:string)=>{const response=await adminFetch("/api/admin/inquiries",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id,status})});if(response.ok)setInquiries(v=>v.map(x=>x.id===id?{...x,status}:x));else setNotice(await response.text()||"Inquiry status could not be updated.");};
+  const removeInquiry=async(id:string)=>{if(!confirm("Delete this inquiry permanently?"))return;const r=await adminFetch(`/api/admin/inquiries?id=${id}`,{method:"DELETE"});if(r.ok)setInquiries(v=>v.filter(x=>x.id!==id));else setNotice(await r.text()||"Inquiry could not be deleted.");};
+  const saveProduct=async(e:React.FormEvent<HTMLFormElement>)=>{e.preventDefault();if(!editing)return;const r=await adminFetch("/api/admin/products",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(editing)});if(r.ok){setProducts(v=>v.map(x=>x.slug===editing.slug?editing:x));setNotice("Product changes saved and are live on the product pages.");setEditing(null);}else setNotice("Product could not be saved.");};
 
   return <main className="admin-page">
     <header className="admin-topbar"><div><p className="eyebrow">Solarious control centre</p><h1>Admin Dashboard</h1><p>Signed in as {adminName}</p></div><div className="admin-top-actions"><button className="button button-ghost" onClick={()=>void load()}><RefreshCw size={16}/> Refresh</button><a className="button button-ghost" href="/signout-with-chatgpt?return_to=/">Sign out</a></div></header>

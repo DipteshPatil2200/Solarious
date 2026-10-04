@@ -1,7 +1,6 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { adminCredentials } from "@/lib/server-config";
-import {ADMIN_SESSION_COOKIE,cookieValue,verifyAdminSession} from "@/lib/admin-session";
+import { backendApiUrl } from "@/lib/server-config";
 
 export type ChatGPTUser = {
   userId: string;
@@ -24,7 +23,7 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   const requestHeaders = await headers();
   const userId = requestHeaders.get(USER_ID_HEADER);
   const email = requestHeaders.get(USER_EMAIL_HEADER);
-  if (!userId || !email) return basicAdminUser(requestHeaders);
+  if (!userId || !email) return backendAdminUser(requestHeaders);
 
   const encodedFullName = requestHeaders.get(USER_FULL_NAME_HEADER);
   const fullName =
@@ -41,38 +40,23 @@ export async function getChatGPTUser(): Promise<ChatGPTUser | null> {
   };
 }
 
-function basicAdminUser(requestHeaders: Headers): ChatGPTUser | null {
-  const { username: expectedUser, password: expectedPassword } =
-    adminCredentials();
-  const sessionUser=verifyAdminSession(cookieValue(requestHeaders.get("cookie"),ADMIN_SESSION_COOKIE));
-  if(sessionUser&&sessionUser===expectedUser)return {userId:`session:${sessionUser}`,displayName:sessionUser,email:sessionUser,fullName:null};
-  const authorization = requestHeaders.get("authorization");
-
-  if (
-    !expectedUser ||
-    !expectedPassword ||
-    !authorization?.startsWith("Basic ")
-  ) {
-    return null;
-  }
-
+async function backendAdminUser(requestHeaders: Headers): Promise<ChatGPTUser | null> {
+  const base = backendApiUrl();
+  const cookie = requestHeaders.get("cookie");
+  if (!base || !cookie) return null;
   try {
-    const decoded = Buffer.from(authorization.slice(6), "base64").toString(
-      "utf8",
-    );
-    const separator = decoded.indexOf(":");
-    if (
-      separator < 1 ||
-      decoded.slice(0, separator) !== expectedUser ||
-      decoded.slice(separator + 1) !== expectedPassword
-    ) {
-      return null;
-    }
-
+    const response = await fetch(`${base}/api/admin/session`, {
+      headers: { cookie },
+      cache: "no-store",
+    });
+    if (!response.ok) return null;
+    const data = (await response.json()) as { admin?: { username?: string } };
+    const username = data.admin?.username;
+    if (!username) return null;
     return {
-      userId: `basic:${expectedUser}`,
-      displayName: expectedUser,
-      email: expectedUser,
+      userId: `session:${username}`,
+      displayName: username,
+      email: username,
       fullName: null,
     };
   } catch {

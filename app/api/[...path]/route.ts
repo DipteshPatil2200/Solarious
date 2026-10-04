@@ -1,7 +1,58 @@
-import {NextResponse} from "next/server";
-import {adminCredentials,backendApiUrl} from "@/lib/server-config";
-import {ADMIN_SESSION_COOKIE,cookieValue,verifyAdminSession} from "@/lib/admin-session";
-const methodsWithBody=new Set(["POST","PUT","PATCH","DELETE"]);
-function basicAdmin(request:Request){const {username,password}=adminCredentials(),sessionUser=verifyAdminSession(cookieValue(request.headers.get("cookie"),ADMIN_SESSION_COOKIE));if(username&&sessionUser===username)return true;const header=request.headers.get("authorization");if(!username||!password||!header?.startsWith("Basic "))return false;try{const decoded=atob(header.slice(6)),separator=decoded.indexOf(":");return separator>0&&decoded.slice(0,separator)===username&&decoded.slice(separator+1)===password}catch{return false}}
-async function forward(request:Request,{params}:{params:Promise<{path:string[]}>}){const base=backendApiUrl();if(!base)return NextResponse.json({error:"Backend API is not configured. Set BACKEND_API_URL or VITE_API_URL in the frontend environment."},{status:503});const {path}=await params,pathname=`/api/${path.join("/")}`,admin=pathname.startsWith("/api/admin/");if(admin&&!basicAdmin(request))return new NextResponse("Admin authentication required",{status:401,headers:{"WWW-Authenticate":"Basic realm=\"Solarious Admin\", charset=\"UTF-8\"","Cache-Control":"no-store"}});const target=new URL(`${pathname}${new URL(request.url).search}`,base),headers=new Headers(request.headers);headers.delete("host");headers.delete("content-length");if(admin){const {apiToken}=adminCredentials();if(!apiToken)return NextResponse.json({error:"Admin backend token is not configured in the frontend environment."},{status:503});headers.set("x-admin-token",apiToken);headers.delete("authorization")}const init:RequestInit&{duplex?:"half"}={method:request.method,headers,redirect:"manual"};if(methodsWithBody.has(request.method)&&request.body){init.body=request.body;init.duplex="half"}try{const response=await fetch(target,init),responseHeaders=new Headers(response.headers);responseHeaders.delete("content-encoding");responseHeaders.delete("content-length");return new Response(response.body,{status:response.status,statusText:response.statusText,headers:responseHeaders})}catch(error){const detail=error instanceof Error?error.message:"unknown connection error";console.error("Backend proxy failed",{target:target.origin,detail});return NextResponse.json({error:`Backend service is unavailable: ${detail}`},{status:503})}}
-export const GET=forward;export const POST=forward;export const PUT=forward;export const PATCH=forward;export const DELETE=forward;
+import { NextResponse } from "next/server";
+import { backendApiUrl } from "@/lib/server-config";
+
+const methodsWithBody = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+async function forward(request: Request, { params }: { params: Promise<{ path: string[] }> }) {
+  const base = backendApiUrl();
+  if (!base) {
+    return NextResponse.json(
+      { error: "Backend API is not configured. Set BACKEND_API_URL in the frontend environment." },
+      { status: 503 },
+    );
+  }
+
+  const { path } = await params;
+  const pathname = `/api/${path.join("/")}`;
+  const target = new URL(`${pathname}${new URL(request.url).search}`, base);
+  const headers = new Headers(request.headers);
+  headers.delete("host");
+  headers.delete("content-length");
+  headers.delete("authorization");
+
+  const init: RequestInit & { duplex?: "half" } = {
+    method: request.method,
+    headers,
+    redirect: "manual",
+    cache: "no-store",
+  };
+  if (methodsWithBody.has(request.method) && request.body) {
+    init.body = request.body;
+    init.duplex = "half";
+  }
+
+  try {
+    const response = await fetch(target, init);
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.delete("content-encoding");
+    responseHeaders.delete("content-length");
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders,
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "unknown connection error";
+    console.error("Backend proxy failed", { target: target.origin, detail });
+    return NextResponse.json(
+      { error: `Backend service is unavailable: ${detail}` },
+      { status: 503 },
+    );
+  }
+}
+
+export const GET = forward;
+export const POST = forward;
+export const PUT = forward;
+export const PATCH = forward;
+export const DELETE = forward;
