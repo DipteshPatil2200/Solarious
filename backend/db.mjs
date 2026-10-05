@@ -7,6 +7,25 @@ function databaseName() {
   return process.env.DB_NAME?.trim() || "solarious";
 }
 
+function validateDatabaseUri(uri) {
+  let parsed;
+  try {
+    parsed = new URL(uri);
+  } catch {
+    throw new Error("MONGODB_URI must be a valid MongoDB connection string. URL-encode special characters in the database password.");
+  }
+
+  if (!['mongodb:', 'mongodb+srv:'].includes(parsed.protocol)) {
+    throw new Error("MONGODB_URI must start with mongodb:// or mongodb+srv://");
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    if (parsed.protocol !== 'mongodb+srv:' || !parsed.hostname.endsWith('.mongodb.net')) {
+      throw new Error("Production MONGODB_URI must be a MongoDB Atlas mongodb+srv:// URI.");
+    }
+  }
+}
+
 function registerConnectionListeners() {
   if (listenersRegistered) return;
   listenersRegistered = true;
@@ -33,6 +52,7 @@ export function connectDatabase() {
 
   const uri = process.env.MONGODB_URI?.trim();
   if (!uri) throw new Error("MONGODB_URI is required");
+  validateDatabaseUri(uri);
 
   registerConnectionListeners();
   mongoose.set("strictQuery", true);
@@ -40,12 +60,12 @@ export function connectDatabase() {
     .connect(uri, {
       appName: "solarious-api",
       dbName: databaseName(),
-      serverSelectionTimeoutMS: 10_000,
-      connectTimeoutMS: 10_000,
+      serverSelectionTimeoutMS: 15_000,
+      connectTimeoutMS: 15_000,
       socketTimeoutMS: 45_000,
       maxIdleTimeMS: 60_000,
       maxPoolSize: 10,
-      minPoolSize: 1,
+      minPoolSize: 0,
       retryWrites: true,
     })
     .then(() => mongoose.connection)

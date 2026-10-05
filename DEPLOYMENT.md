@@ -31,7 +31,7 @@ This is a standard Next.js App Router application, not a React Router SPA. Do no
 
 1. Create the `solarious` database and a least-privilege database user.
 2. Allow Render outbound access using the Atlas network access controls appropriate for the service.
-3. Set the SRV connection string only in Render as `MONGODB_URI`.
+3. Set the Atlas SRV connection string only in Render as `MONGODB_URI`. URL-encode database-password characters such as `@`, `#`, `%`, `/`, `?`, `:`, and `&` before placing them in the URI.
 4. Install MongoDB Database Tools (`mongodump` and `mongorestore`) on the trusted migration workstation.
 5. From `backend/`, set `ATLAS_MONGODB_URI`, keep `LOCAL_MONGODB_URI` pointed at local MongoDB, and run `npm run migrate:mongo:plan`. This dry-run changes no data and prints no credentials.
 6. Run `npm run migrate:mongo` only after reviewing the plan. It creates BSON backups of both the local database and the current Atlas database before restore. It refuses to restore when Atlas contains any records and never uses `--drop`.
