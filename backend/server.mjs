@@ -14,8 +14,9 @@ import {connectDatabase,databaseStatus,disconnectDatabase,mongoose} from "./db.m
 
 const required = name => { const value=process.env[name]?.trim(); if(!value) throw new Error(`${name} is required`); return value; };
 required("MONGODB_URI");const adminUsername=required("ADMIN_USERNAME"),adminPassword=required("ADMIN_PASSWORD"),dbName=process.env.DB_NAME?.trim()||"solarious",port=Number(process.env.PORT||4000);
-const origins=(process.env.FRONTEND_ORIGINS||"").split(",").map(x=>x.trim()).filter(Boolean);
-if(!origins.length) throw new Error("FRONTEND_ORIGINS is required");
+const configuredOrigins=(process.env.FRONTEND_ORIGINS||"").split(",").map(x=>x.trim()).filter(Boolean);
+if(!configuredOrigins.length) throw new Error("FRONTEND_ORIGINS is required");
+const origins=new Set(configuredOrigins.map(origin=>{try{return new URL(origin.includes("://")?origin:`https://${origin}`).origin}catch{return origin}}));
 if(process.env.CLOUDINARY_URL)cloudinary.config({secure:true});
 
 const timestamps={timestamps:true,versionKey:false};
@@ -31,7 +32,7 @@ const defaultProducts=[{slug:"mono-perc",name:"Mono PERC",technology:"Passivated
 let databaseRetryTimer, databaseAttempts=0;
 const initialiseDatabase=async()=>{try{await connectDatabase();await Promise.all(defaultProducts.map(product=>Product.updateOne({slug:product.slug},{$setOnInsert:product},{upsert:true})));databaseAttempts=0;console.log("Database initialization complete")}catch(error){databaseAttempts+=1;const delay=Math.min(60_000,5_000*2**Math.min(databaseAttempts-1,3));console.error("Database initialization failed; retrying",{attempt:databaseAttempts,retryInMs:delay,name:error?.name||"Error",message:error?.message||"Unknown database error"});databaseRetryTimer=setTimeout(()=>void initialiseDatabase(),delay)}};
 
-const app=express();app.disable("x-powered-by");app.use(helmet({crossOriginResourcePolicy:{policy:"cross-origin"}}));app.use(compression());app.use(cors({origin(origin,callback){if(!origin||origins.includes(origin))return callback(null,true);callback(Object.assign(new Error("Origin not allowed"),{status:403}))},credentials:true,methods:["GET","POST","PUT","PATCH","DELETE","OPTIONS"],allowedHeaders:["Content-Type","X-File-Name"],optionsSuccessStatus:204}));app.use(express.json({limit:"1mb"}));
+const app=express();app.disable("x-powered-by");app.use(helmet({crossOriginResourcePolicy:{policy:"cross-origin"}}));app.use(compression());app.use(cors({origin(origin,callback){if(!origin||origins.has(origin))return callback(null,true);callback(Object.assign(new Error("Origin not allowed"),{status:403}))},credentials:true,methods:["GET","POST","PUT","PATCH","DELETE","OPTIONS"],allowedHeaders:["Content-Type","X-File-Name"],optionsSuccessStatus:204}));app.use(express.json({limit:"1mb"}));
 const ADMIN_COOKIE="solarious_admin_session",ADMIN_SESSION_SECONDS=8*60*60;
 const safeEqual=(left,right)=>{const a=Buffer.from(String(left)),b=Buffer.from(String(right));return a.length===b.length&&timingSafeEqual(a,b)};
 const signSession=payload=>createHmac("sha256",adminPassword).update(payload).digest("base64url");
