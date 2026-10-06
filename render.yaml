@@ -15,7 +15,7 @@ services:
       - key: DB_NAME
         value: solarious
       - key: MONGODB_URI
-        sync: false
+        sync: True
       - key: FRONTEND_ORIGINS
         sync: false
       - key: ADMIN_USERNAME
