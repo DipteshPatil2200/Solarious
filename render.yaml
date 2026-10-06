@@ -26,10 +26,6 @@ services:
         sync: false
       - key: CLOUDINARY_URL
         sync: false
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: OPENAI_IMAGE_MODEL
-        value: gpt-image-1
       - key: APINEX_API_KEY
         sync: false
       - key: APINEX_BASE_URL
