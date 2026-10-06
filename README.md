@@ -1,4 +1,6 @@
-# vinext-starter
+# Solarious Energy
+
+> **Deployment note:** This project is deployed as a Next.js frontend on Vercel and a separate Express API from `backend/` on Render, backed by MongoDB Atlas and Cloudinary. The legacy starter material below is retained only as historical reference and is not part of the deployed runtime. Use [DEPLOYMENT.md](DEPLOYMENT.md) and `render.yaml` for the current deployment instructions. Secrets belong only in provider environment settings.
 
 A clean full-stack starter running on [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and Drizzle support.
 
