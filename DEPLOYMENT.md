@@ -10,6 +10,8 @@
 
 Required environment variables are listed in `backend/.env.example`. Configure them in Render; never commit their real values. `MONGODB_URI` must be the Atlas SRV URI for `cluster.il8ftxi.mongodb.net` and `DB_NAME` should remain `solarious`. `FRONTEND_ORIGINS` is a comma-separated allowlist of the production Vercel/custom frontend origins.
 
+Text AI uses APInex only from the Render API: set `APINEX_API_KEY`, `APINEX_BASE_URL=https://api.apinex.bond/v1`, and `APINEX_MODEL=free/mimo-v2.6-pro`. `OPENAI_API_KEY` and `OPENAI_IMAGE_MODEL` remain server-only variables for the separate Daily Creative image workflow. Neither provider key belongs in Vercel.
+
 ## Vercel frontend
 
 - Framework preset: Next.js

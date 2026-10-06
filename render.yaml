@@ -30,5 +30,11 @@ services:
         sync: false
       - key: OPENAI_IMAGE_MODEL
         value: gpt-image-1
+      - key: APINEX_API_KEY
+        sync: false
+      - key: APINEX_BASE_URL
+        value: https://api.apinex.bond/v1
+      - key: APINEX_MODEL
+        value: free/mimo-v2.6-pro
       - key: CRON_SECRET
         generateValue: true
