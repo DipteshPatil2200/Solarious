@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "../vendor/shadcn-tailwind-4.13.0.css";
 @import "./creative-admin.css";
+@import "./team.css";
 
 :root{--ink:#17201c;--muted:#667069;--orange:#ee7b16;--orange-dark:#c95d08;--cream:#f6f7f4;--line:#dde2dd;--green:#173f32;--white:#fff;--radius:18px;--background:#fff;--foreground:#17201c;--card:#fff;--card-foreground:#17201c;--primary:#ee7b16;--primary-foreground:#fff;--secondary:#f6f7f4;--secondary-foreground:#17201c;--muted-foreground:#667069;--border:#dde2dd;--input:#d7ddd7;--ring:#ee7b16}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#fff;color:var(--ink);font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6}a{color:inherit;text-decoration:none}em{font-family:Georgia,serif;font-weight:400;color:var(--orange)}
