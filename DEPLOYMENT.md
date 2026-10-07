@@ -12,6 +12,8 @@ Required environment variables are listed in `backend/.env.example`. Configure t
 
 Text and marketing AI use APInex only from the Render API: set `APINEX_API_KEY`, `APINEX_BASE_URL=https://api.apinex.bond/v1`, and `APINEX_MODEL=free/mimo-v2.6-pro`. The current APInex integration is content-and-image-prompt mode because its documented API does not provide a verified image-generation endpoint. Neither provider key belongs in Vercel.
 
+Daily Creative images use a separate Stability AI provider. In Render, set `IMAGE_PROVIDER=stability`, `IMAGE_API_KEY=<Stability API key>`, and `IMAGE_MODEL=core` (or `ultra`). The key is server-only. A Daily Creative fails safely instead of falling back to content-only mode if this provider, the verified mobile number, logo, Cloudinary, or image upload is unavailable.
+
 ## Vercel frontend
 
 - Framework preset: Next.js

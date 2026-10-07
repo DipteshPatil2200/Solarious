@@ -32,5 +32,11 @@ services:
         value: https://api.apinex.bond/v1
       - key: APINEX_MODEL
         value: free/mimo-v2.6-pro
+      - key: IMAGE_PROVIDER
+        value: stability
+      - key: IMAGE_API_KEY
+        sync: false
+      - key: IMAGE_MODEL
+        value: core
       - key: CRON_SECRET
         generateValue: true
