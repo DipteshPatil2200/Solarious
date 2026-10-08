@@ -8,6 +8,8 @@ import "./log-management.css";
 import "./inner-pages.css";
 import "./quote-overrides.css";
 import "./usability.css";
+import "./footer.css";
+import "./team.css";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import FloatingAssistant from "@/components/floating-assistant";
