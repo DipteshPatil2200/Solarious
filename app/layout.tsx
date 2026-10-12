@@ -14,6 +14,7 @@ import "./mobile-navigation.css";
 import "./product-image-sizing.css";
 import "./admin-products.css";
 import "./admin-team-photo.css";
+import "./dynamic-image-fixes.css";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import FloatingAssistant from "@/components/floating-assistant";
