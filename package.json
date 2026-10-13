@@ -10,7 +10,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "typecheck": "tsc --noEmit",
+    "test:uploads": "node --test tests/*.test.mjs && npm --prefix backend test"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
