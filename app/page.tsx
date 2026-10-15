@@ -1,31 +1,87 @@
 import Link from "next/link";
-import { ArrowRight, Leaf, ShieldCheck, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, ArrowUpRight, CalendarDays, Download, Factory, FileText, Leaf, ShieldCheck, Sparkles } from "lucide-react";
 import AiSolarSection from "@/components/ai-solar-section";
 import HeroSlider from "@/components/hero-slider";
+import PremiumProductShowcase from "@/components/premium-product-showcase";
+import TechnologyTabs from "@/components/technology-tabs";
+import { company, resourceCategories } from "@/data/site";
+import { getEvents } from "@/lib/events";
+import { getGallery } from "@/lib/gallery";
 import { getProductionHeroBanners } from "@/lib/hero-banners";
+import { getSiteProducts } from "@/lib/site-products";
+
+export const dynamic = "force-dynamic";
 
 const pillars = [
-  { number: "01", title: "Premium Quality", text: "Every module is designed around disciplined inspection, dependable materials and traceable quality checks.", icon: ShieldCheck },
-  { number: "02", title: "Advanced Technology", text: "Modern module technologies and automated processes support consistent performance across project types.", icon: Sparkles },
-  { number: "03", title: "Sustainable Progress", text: "Efficient manufacturing and durable solar solutions help projects move toward lower-carbon energy.", icon: Leaf },
+  { number: "01", title: "Premium Quality", text: "Disciplined inspection, dependable materials and traceable quality checks shape every module.", icon: ShieldCheck },
+  { number: "02", title: "Advanced Technology", text: "Modern cell architectures support project-specific performance and design priorities.", icon: Sparkles },
+  { number: "03", title: "Sustainable Progress", text: "Responsible manufacturing and durable solar solutions support a cleaner energy future.", icon: Leaf },
 ];
 
+const fallbackGallery = [
+  { id: "factory", image_url: "/manufacturing-line.webp", alt_text: "Solar module manufacturing line", title: "Manufacturing discipline", category: "Manufacturing" },
+  { id: "utility", image_url: "/utility-solar.webp", alt_text: "Utility scale solar project", title: "Utility-scale applications", category: "Projects" },
+  { id: "technology", image_url: "/ai-solar-intelligence.webp", alt_text: "Solar technology and digital intelligence", title: "Intelligent solar planning", category: "Technology" },
+];
+
+const formatDate = (value: string) => new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(value));
+
 export default async function Home() {
-  const banners = await getProductionHeroBanners();
-  return (
-    <main>
-      <HeroSlider banners={banners}/>
+  const [banners, products, gallery, events] = await Promise.all([getProductionHeroBanners(), getSiteProducts(), getGallery(), getEvents()]);
+  const galleryPreview = gallery.length ? gallery.slice(0, 5) : fallbackGallery;
+  const eventPreview = events.slice(0, 3);
 
-      <section className="trust-strip" aria-label="Key capabilities">
-        <p>Project-focused engineering</p><p>Multi-technology portfolio</p><p>Technical sales support</p><p>Configurable specifications</p>
-      </section>
+  return <main className="premium-home">
+    <HeroSlider banners={banners} />
 
-      <section className="section pillars" id="technology">
-        <div className="section-heading"><div><p className="eyebrow">Why Solarious</p><h2>Built on <em>three pillars</em></h2></div><p>Purposeful technology, disciplined quality and sustainability thinking—brought together for demanding solar projects.</p></div>
-        <div className="pillar-grid">{pillars.map(({ number, title, text, icon: Icon }) => <article className="pillar-card" key={number}><div className="card-top"><span className="icon-box"><Icon size={22} /></span><span>{number}</span></div><h3>{title}</h3><p>{text}</p><Link href="/#manufacturing">Learn more <ArrowRight size={15} /></Link></article>)}</div>
-      </section>
+    <section className="premium-intro premium-section" aria-labelledby="brand-introduction">
+      <div className="premium-section-number">01</div>
+      <div><p className="premium-kicker">Solarious Energy</p><h2 id="brand-introduction">Engineering sunlight into <em>lasting value.</em></h2></div>
+      <div className="premium-intro-copy"><p>{company.description}</p><p>We bring product technology, manufacturing discipline and responsive technical support together for commercial, industrial and utility-scale solar applications.</p><Link className="premium-text-link" href="/about">Discover Solarious <ArrowRight size={16} /></Link></div>
+    </section>
 
-      <AiSolarSection />
-    </main>
-  );
+    <section className="premium-products premium-section" aria-labelledby="product-portfolio">
+      <div className="premium-heading-row"><div><p className="premium-kicker">Module portfolio</p><h2 id="product-portfolio">Technology for every <em>solar ambition.</em></h2></div><p>Explore Solarious module categories using approved product information. Confirm final power, efficiency and warranty values with our technical team.</p></div>
+      <PremiumProductShowcase products={products} />
+    </section>
+
+    <section className="premium-manufacturing" aria-labelledby="manufacturing-showcase">
+      <div className="premium-manufacturing-image"><Image src="/manufacturing-line.webp" alt="Solarious solar module manufacturing line" fill sizes="(max-width: 1050px) 100vw, 54vw" /></div>
+      <div className="premium-manufacturing-copy"><p className="premium-kicker">Advanced manufacturing</p><h2 id="manufacturing-showcase">Precision Manufacturing.<br /><em>Powering Tomorrow.</em></h2><p>A disciplined production line built around process control, automation, testing and traceability.</p><div className="manufacturing-features"><span><Factory size={19} /><strong>Controlled production</strong><small>Structured material flow and repeatable assembly.</small></span><span><ShieldCheck size={19} /><strong>Quality checkpoints</strong><small>Inspection, EL imaging and flash testing.</small></span></div><Link className="premium-button light" href="/manufacturing">Explore manufacturing <ArrowUpRight size={16} /></Link></div>
+    </section>
+
+    <section className="premium-technology premium-section" aria-labelledby="technology-experience-heading">
+      <div className="premium-heading-row"><div><p className="premium-kicker">Solar technology experience</p><h2 id="technology-experience-heading">Purpose-built technologies.<br /><em>Clearly explained.</em></h2></div><Link className="premium-text-link" href="/technology">Explore technology <ArrowRight size={16} /></Link></div>
+      <TechnologyTabs products={products} compact />
+    </section>
+
+    <section className="premium-why premium-section" aria-labelledby="why-solarious">
+      <div className="premium-heading-row"><div><p className="premium-kicker">Why Solarious</p><h2 id="why-solarious">Confidence at every <em>project stage.</em></h2></div><p>Purposeful technology, disciplined quality and responsible thinking—brought together for demanding solar projects.</p></div>
+      <div className="premium-pillar-grid">{pillars.map(({ number, title, text, icon: Icon }) => <article key={number}><span>{number}</span><Icon size={22} /><h3>{title}</h3><p>{text}</p></article>)}</div>
+    </section>
+
+    <AiSolarSection />
+
+    <section className="premium-gallery premium-section" aria-labelledby="gallery-preview-heading">
+      <div className="premium-heading-row"><div><p className="premium-kicker">Projects &amp; gallery</p><h2 id="gallery-preview-heading">Solarious in <em>focus.</em></h2></div><Link className="premium-text-link" href="/gallery">View full gallery <ArrowRight size={16} /></Link></div>
+      <div className={`premium-gallery-grid count-${Math.min(galleryPreview.length, 5)}`}>{galleryPreview.map((image, index) => <Link href="/gallery" className={`premium-gallery-card item-${index + 1}`} key={image.id}><Image src={image.image_url} alt={image.alt_text || image.title || "Solarious gallery"} fill sizes="(max-width: 700px) 84vw, 40vw" /><span><small>{image.category}</small><strong>{image.title || "Solarious Energy"}</strong></span></Link>)}</div>
+    </section>
+
+    <section className="premium-events premium-section" aria-labelledby="events-heading">
+      <div className="premium-heading-row"><div><p className="premium-kicker">Events &amp; activities</p><h2 id="events-heading">Meet. Learn. <em>Move solar forward.</em></h2></div><Link className="premium-text-link" href="/events">All events <ArrowRight size={16} /></Link></div>
+      {eventPreview.length ? <div className="premium-event-track">{eventPreview.map((event) => <article key={event.id}><Image src={event.cover_url || "/utility-solar.webp"} alt="" width={900} height={560} sizes="(max-width: 700px) 84vw, 33vw" /><div><span><CalendarDays size={14} /> {formatDate(event.event_date)}</span><h3>{event.title}</h3><p>{event.short_description}</p><Link href={`/events/${event.slug}`}>View event <ArrowUpRight size={15} /></Link></div></article>)}</div> : <div className="premium-empty-state"><CalendarDays size={28} /><h3>New events are on the way.</h3><p>Published exhibitions, technical sessions and activities will appear here.</p><Link href="/events">Explore events</Link></div>}
+    </section>
+
+    <section className="premium-resources premium-section" aria-labelledby="resources-heading">
+      <div className="premium-heading-row"><div><p className="premium-kicker">Resources &amp; downloads</p><h2 id="resources-heading">Approved information.<br /><em>Ready when you are.</em></h2></div><p>Find published datasheets, technical specifications, brochures and company documents in one searchable library.</p></div>
+      <div className="premium-resource-grid">{resourceCategories.slice(0, 4).map((category, index) => <Link href="/resources" key={category}><span>{String(index + 1).padStart(2, "0")}</span><FileText size={22} /><strong>{category}</strong><ArrowUpRight size={17} /></Link>)}</div>
+      <Link className="premium-text-link" href="/resources"><Download size={16} /> Open download centre</Link>
+    </section>
+
+    <section className="premium-contact-cta" aria-labelledby="contact-cta-heading">
+      <div><p className="premium-kicker">Start your solar project</p><h2 id="contact-cta-heading">Let&apos;s build a cleaner energy future.</h2><p>Share your application, capacity and timeline for project-focused guidance from the Solarious team.</p></div>
+      <div><Link className="premium-button" href="/quote">Get a quote <ArrowRight size={16} /></Link><Link className="premium-button secondary" href="/contact">Contact our team</Link></div>
+    </section>
+  </main>;
 }

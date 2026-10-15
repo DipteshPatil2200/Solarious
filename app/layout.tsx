@@ -4,6 +4,7 @@ import "./resource-admin.css";
 import "./form-fixes.css";
 import "./company-details.css";
 import "./hero-slider.css";
+import "./premium-home.css";
 import "./log-management.css";
 import "./inner-pages.css";
 import "./quote-overrides.css";
