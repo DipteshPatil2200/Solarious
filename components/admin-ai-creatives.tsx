@@ -248,8 +248,8 @@ export default function AdminAiCreatives() {
         <div>
           <h2>Marketing / Festival Creative Studio</h2>
           <p>
-            Create deterministic branded greetings with AI backgrounds and a
-            resilient editable-template fallback.
+            Create branded greetings with verified AI image generation,
+            deterministic typography and secure cloud storage.
           </p>
           <p>
             <strong>

@@ -16,7 +16,13 @@ async function forward(request: Request, { params }: { params: Promise<{ path: s
   const { path } = await params;
   const pathname = `/api/${path.join("/")}`;
   const target = new URL(`${pathname}${new URL(request.url).search}`, base);
-  const isCreativeGeneration = request.method === "POST" && pathname === "/api/admin/creatives";
+  const isCreativeGeneration =
+    request.method === "POST" &&
+    (pathname === "/api/admin/creatives" ||
+      pathname === "/api/admin/creatives/festival" ||
+      /^\/api\/admin\/creatives\/[^/]+\/(?:generate-image|regenerate)$/.test(
+        pathname,
+      ));
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), isCreativeGeneration ? creativeTimeoutMs : 30_000);
   const headers = new Headers(request.headers);
@@ -54,8 +60,19 @@ async function forward(request: Request, { params }: { params: Promise<{ path: s
     if (isCreativeGeneration) console.error("[creative-proxy]", { backendHost: target.host, status: timedOut ? 504 : 503, durationMs: creativeTimeoutMs, detail });
     else console.error("Backend proxy failed", { target: target.origin, detail });
     return NextResponse.json(
-      { error: timedOut ? "Creative generation timed out. Please check generation history before retrying." : "Backend service is unavailable." },
-      { status: timedOut ? 504 : 503 },
+      isCreativeGeneration
+        ? {
+            success: false,
+            error: {
+              code: timedOut ? "PROVIDER_TIMEOUT" : "PROVIDER_UNAVAILABLE",
+              message: timedOut
+                ? "Creative generation timed out. Please check generation history before retrying."
+                : "The creative service is temporarily unavailable.",
+              retryable: true,
+            },
+          }
+        : { error: "Backend service is unavailable." },
+      { status: timedOut ? 408 : 503 },
     );
   } finally {
     clearTimeout(timeout);

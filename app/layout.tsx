@@ -13,6 +13,7 @@ import "./footer.css";
 import "./team.css";
 import "./mobile-navigation.css";
 import "./product-image-sizing.css";
+import "./content-image-sizing.css";
 import "./admin-products.css";
 import "./admin-team-photo.css";
 import "./dynamic-image-fixes.css";

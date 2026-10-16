@@ -47,7 +47,7 @@ export default async function ManufacturingPage() {
             src={content.heroImage}
             alt="Solar module manufacturing equipment"
             fill
-            sizes="(max-width: 700px) 100vw, 1240px"
+            sizes="(max-width: 900px) 100vw, 60vw"
           />
           <span>Solarious / Production &amp; engineering</span>
         </div>
