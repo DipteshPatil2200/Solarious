@@ -52,6 +52,23 @@ export function createSignedImageUpload({ folder, prefix, now = Date.now(), clie
   };
 }
 
+export function createSignedRawUpload({ folder, prefix, now = Date.now(), client = cloudinary }) {
+  const config = client.config();
+  if (!config.cloud_name || !config.api_key || !config.api_secret) throw credentialError("Cloud storage is not configured.");
+  const timestamp = Math.floor(now / 1000);
+  const publicId = `${prefix}-${randomUUID()}`;
+  const params = { folder, overwrite: false, public_id: publicId, timestamp };
+  return {
+    timestamp,
+    folder,
+    publicId,
+    overwrite: false,
+    signature: client.utils.api_sign_request(params, config.api_secret),
+    apiKey: config.api_key,
+    uploadUrl: `https://api.cloudinary.com/v1_1/${config.cloud_name}/raw/upload`,
+  };
+}
+
 let verifiedUntil = 0;
 let verification;
 

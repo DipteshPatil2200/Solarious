@@ -1,0 +1,176 @@
+import "server-only";
+import { backendApiUrl } from "@/lib/server-config";
+import { manufacturingSteps, pageContent } from "@/data/site";
+
+export type CmsSection = { title: string; text: string };
+export type TimelineItem = {
+  year: string;
+  title: string;
+  text: string;
+  imageUrl: string;
+  displayOrder: number;
+  published: boolean;
+};
+export type ManufacturingStep = {
+  title: string;
+  description: string;
+  imageUrl: string;
+  videoUrl: string;
+  published: boolean;
+};
+export type AboutCms = {
+  eyebrow: string;
+  title: string;
+  intro: string;
+  heroImage: string;
+  sections: CmsSection[];
+  timeline: TimelineItem[];
+};
+export type ManufacturingCms = {
+  eyebrow: string;
+  title: string;
+  intro: string;
+  heroImage: string;
+  sections: CmsSection[];
+  steps: ManufacturingStep[];
+};
+export type SiteLocation = {
+  id?: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  mapsUrl: string;
+  primary: boolean;
+  active: boolean;
+  verificationStatus: "pending" | "verified";
+  displayOrder: number;
+};
+export type BrandingCms = {
+  logoUrl: string;
+  alternateLogoUrl: string;
+  footerLogoUrl: string;
+  faviconUrl: string;
+  partnerLogoUrls: string[];
+};
+
+export const defaultAboutCms: AboutCms = {
+  eyebrow: pageContent.about.eyebrow,
+  title: pageContent.about.title,
+  intro: pageContent.about.intro,
+  heroImage: "/manufacturing-line.webp",
+  sections: pageContent.about.sections.map(([title, text]) => ({
+    title,
+    text,
+  })),
+  timeline: [],
+};
+export const defaultManufacturingCms: ManufacturingCms = {
+  eyebrow: pageContent.manufacturing.eyebrow,
+  title: "Precision Manufacturing. Powering Tomorrow.",
+  intro: pageContent.manufacturing.intro,
+  heroImage: "/manufacturing-line.webp",
+  sections: pageContent.manufacturing.sections.map(([title, text]) => ({
+    title,
+    text,
+  })),
+  steps: manufacturingSteps.map((title) => ({
+    title,
+    description: "Stage details are pending company confirmation.",
+    imageUrl: "",
+    videoUrl: "",
+    published: true,
+  })),
+};
+export const defaultLocation: SiteLocation = {
+  name: "Mayureshwar Solar Energy Pvt Ltd",
+  address: "4Q7X+4QP, Babhalde, Dhule, Maharashtra, India",
+  latitude: 21.112265,
+  longitude: 74.798172,
+  mapsUrl:
+    "https://www.google.com/maps/search/?api=1&query=21.112265%2C74.798172",
+  primary: true,
+  active: true,
+  verificationStatus: "pending",
+  displayOrder: 0,
+};
+export const defaultBrandingCms: BrandingCms = {
+  logoUrl: "/solarious-logo.png",
+  alternateLogoUrl: "/solarious-logo.png",
+  footerLogoUrl: "/solarious-logo.png",
+  faviconUrl: "/favicon.svg",
+  partnerLogoUrls: [],
+};
+
+async function setting<T>(key: string, fallback: T): Promise<T> {
+  try {
+    const backend = backendApiUrl();
+    if (!backend) return fallback;
+    const response = await fetch(`${backend}/api/site-settings/${key}`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return fallback;
+    const data = (await response.json()) as { value?: T };
+    return data.value && typeof data.value === "object"
+      ? { ...fallback, ...data.value }
+      : fallback;
+  } catch {
+    return fallback;
+  }
+}
+export async function getAboutCms() {
+  const value = await setting<AboutCms>("aboutPage", defaultAboutCms);
+  return {
+    ...value,
+    timeline: (Array.isArray(value.timeline) ? value.timeline : [])
+      .map((item, index) => ({
+        ...item,
+        imageUrl: item.imageUrl || "",
+        displayOrder: Number(item.displayOrder) || index,
+        published: item.published !== false,
+      }))
+      .filter((item) => item.published)
+      .sort((a, b) => a.displayOrder - b.displayOrder),
+  };
+}
+export async function getManufacturingCms() {
+  const value = await setting<ManufacturingCms>(
+    "manufacturingPage",
+    defaultManufacturingCms,
+  );
+  return {
+    ...value,
+    steps: (Array.isArray(value.steps) ? value.steps : [])
+      .map((step) =>
+        typeof step === "string"
+          ? {
+              title: step,
+              description: "Stage details are pending company confirmation.",
+              imageUrl: "",
+              videoUrl: "",
+              published: true,
+            }
+          : step,
+      )
+      .filter((step) => step.published !== false),
+  };
+}
+export const getBrandingCms = () => setting("branding", defaultBrandingCms);
+export async function getLocations(): Promise<SiteLocation[]> {
+  try {
+    const backend = backendApiUrl();
+    if (!backend) return [defaultLocation];
+    const response = await fetch(`${backend}/api/locations`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return [defaultLocation];
+    const data = (await response.json()) as { locations?: SiteLocation[] };
+    return Array.isArray(data.locations) && data.locations.length
+      ? data.locations
+      : [defaultLocation];
+  } catch {
+    return [defaultLocation];
+  }
+}

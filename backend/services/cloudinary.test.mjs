@@ -4,6 +4,7 @@ import { v2 as sdk } from "cloudinary";
 import {
   configureCloudinary,
   createSignedImageUpload,
+  createSignedRawUpload,
   parseCloudinaryUrl,
   resetCloudinaryVerificationCache,
   verifyCloudinaryCredentials,
@@ -11,6 +12,16 @@ import {
 
 test("reports missing Cloudinary credentials without exposing values", () => {
   assert.deepEqual(parseCloudinaryUrl(""), { configured: false, error: "CLOUDINARY_URL is missing." });
+});
+
+test("creates a signed raw upload without exposing the API secret", () => {
+  const config = { cloud_name: "demo", api_key: "12345", api_secret: "secret" };
+  const client = { config: () => config, utils: sdk.utils };
+  const signed = createSignedRawUpload({ folder: "solarious/product-datasheets", prefix: "datasheet", now: 1_791_890_128_999, client });
+  assert.equal(signed.uploadUrl, "https://api.cloudinary.com/v1_1/demo/raw/upload");
+  assert.match(signed.publicId, /^datasheet-/);
+  assert.equal("apiSecret" in signed, false);
+  assert.equal(signed.signature, sdk.utils.api_sign_request({folder:signed.folder,overwrite:false,public_id:signed.publicId,timestamp:signed.timestamp}, config.api_secret));
 });
 
 test("explicitly configures one decoded CLOUDINARY_URL credential source", () => {

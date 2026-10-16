@@ -52,7 +52,7 @@ export default async function Home() {
     </section>
 
     <section className="premium-technology premium-section" aria-labelledby="technology-experience-heading">
-      <div className="premium-heading-row"><div><p className="premium-kicker">Solar technology experience</p><h2 id="technology-experience-heading">Purpose-built technologies.<br /><em>Clearly explained.</em></h2></div><Link className="premium-text-link" href="/technology">Explore technology <ArrowRight size={16} /></Link></div>
+      <div className="premium-heading-row"><div><p className="premium-kicker">Solar technology experience</p><h2 id="technology-experience-heading">Purpose-built technologies.<br /><em>Clearly explained.</em></h2></div><Link className="premium-text-link" href="/products">Explore products <ArrowRight size={16} /></Link></div>
       <TechnologyTabs products={products} compact />
     </section>
 

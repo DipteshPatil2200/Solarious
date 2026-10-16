@@ -12,7 +12,10 @@ export const company = {
   description: "Solar module manufacturing and engineering support for commercial, industrial and utility-scale applications.",
 };
 
-export type Product = { slug:string; name:string; technology:string; summary:string; applications:string[]; features:string[]; bifacial:string; image:string };
+export type ProductVariant = { power:string; voc:string; isc:string; vmp:string; imp:string; efficiency:string };
+export type ProductSeries = { id:string; model:string; title:string; moduleType:"Monofacial"|"Bifacial"; wattageRange:string; cells:string; dimensions:string; weight:string; variants:ProductVariant[]; bifacialGain?:Record<string,string[]>; reviewNote?:string };
+export type ProductDatasheet = { title:string; url:string; moduleType:"Monofacial"|"Bifacial"; fileSize:number };
+export type Product = { slug:string; name:string; technology:string; summary:string; applications:string[]; features:string[]; bifacial:string; image:string; moduleType?:string; status?:"draft"|"published"|"archived"; powerRating?:string; efficiency?:string; dimensions?:string; weight?:string; cellType?:string; warranty?:string; modelNumber?:string; gallery?:string[]; datasheetUrl?:string; datasheets?:ProductDatasheet[]; series?:ProductSeries[]; technicalSpecifications?:Record<string,unknown> };
 export const products: Product[] = [
   { slug:"mono-perc", name:"Mono PERC", technology:"Passivated Emitter and Rear Cell", summary:"A mature module category for dependable commercial, industrial and ground-mounted applications.", applications:["Commercial rooftop","Industrial","Solar EPC"], features:["Established cell architecture","Flexible project use","Configuration-dependent module formats"], bifacial:"Configuration dependent", image:"/utility-solar.webp" },
   { slug:"topcon", name:"TOPCon", technology:"Tunnel Oxide Passivated Contact", summary:"A performance-focused category for projects prioritising efficiency and energy yield.", applications:["Commercial rooftop","Industrial","Utility scale"], features:["Advanced contact architecture","Performance-focused design","Bifacial configurations may be available"], bifacial:"Configuration dependent", image:"/ai-solar-intelligence.webp" },
@@ -60,5 +63,5 @@ export const pageContent = {
   ]},
 } as const;
 
-export const manufacturingSteps=["Cell Inspection & Sorting","Stringer & Tabbing","Layup","Lamination","Framing","Junction Box","EL Testing","Flash Testing","Quality Inspection","Packaging & Dispatch"];
+export const manufacturingSteps=["Material Inspection","Cell Sorting and Stringing","Module Layup","Lamination","Framing and Junction Box","Electrical and Quality Testing","Final Inspection and Dispatch"];
 export const resourceCategories=["Product Datasheets","Technical Specifications","Company Profile","Brochures","Certificates","Warranty Documents","Installation Documents"];
