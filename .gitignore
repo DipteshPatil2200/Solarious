@@ -1,7 +1,9 @@
+
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies
 node_modules/
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -10,59 +12,88 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 
-# testing
+# Testing
 /coverage
+**/coverage/
+playwright-report/
+test-results/
 
-# build output
+# Build output
 /build/*
 /dist/
+build/
+dist/
+out/
+**/out/
 
-# next.js
+# Next.js
 /.next/
 /.vinext/
 /out/
+**/.next/
 
-# misc
+# Miscellaneous
 .DS_Store
+Thumbs.db
 *.pem
 
-# debug
+# Debug and logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 *.log
+logs/
 backups/
 backend/backups/
 *.archive
 *.archive.gz
-logs/
-backend/uploads/
 
-# env files (can opt-in for committing if needed)
+# Environment files and secrets
 .env*
 !.env.example
-!backend/.env.example
+!**/.env.example
+!.env.*.example
+!**/.env.*.example
 .dev.vars
 
-# vercel
-.vercel
-
-# typescript
-next-env.d.ts
-*.tsbuildinfo
+# Vercel and deployment tools
+.vercel/
+**/.vercel/
 /.wrangler/
 
-# temporary and local cache files
+# TypeScript
+next-env.d.ts
+*.tsbuildinfo
+
+# Local databases
+*.sqlite
+*.sqlite3
+*.db
+
+# Uploads and user-generated files
+uploads/
+backend/uploads/
+
+# Temporary files and local caches
 /.cache/
+**/.cache/
 /tmp/
 /temp/
+tmp/
+temp/
 *.tmp
 *.temp
+.turbo/
+
+# Local runtime and tool state
 /.git-codex-backup/
-# Checkout-local execution profile and tool state; never publish them.
 /.sites-runtime/
 /.agents/
 /.codex/
 /outputs/
 /work/
+
+# IDE and editor files
+.vscode/
+.idea/
