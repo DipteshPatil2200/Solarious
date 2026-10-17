@@ -22,7 +22,20 @@
 
   .premium-product-panel,
   .technology-panel {
-    grid-template-columns: minmax(280px, 0.6fr) minmax(0, 1.4fr);
+    grid-template-columns: minmax(420px, 0.85fr) minmax(0, 1.15fr);
+  }
+
+  .premium-product-panel > *,
+  .technology-panel > * {
+    min-width: 0;
+  }
+
+  .premium-product-copy h3,
+  .technology-panel-copy h2 {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    line-height: 0.94;
+    text-wrap: balance;
   }
 
   .premium-product-visual,
@@ -62,6 +75,13 @@
 
   .event-card > img {
     height: 165px;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1050px) {
+  .premium-product-panel,
+  .technology-panel {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
