@@ -39,4 +39,10 @@ services:
       - key: IMAGE_MODEL
         value: core
       - key: CRON_SECRET
-        generateValue: true
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: EMAIL_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false

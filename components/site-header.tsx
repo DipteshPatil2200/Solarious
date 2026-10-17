@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Menu } from "lucide-react";
+import LeadFormModal from "@/components/lead-form-modal";
 import {
   Sheet,
   SheetClose,
@@ -197,9 +198,7 @@ export default function SiteHeader({
         <NavLink href="/resources" label="Resources" pathname={pathname} />
         <NavLink href="/contact" label="Contact" pathname={pathname} />
       </nav>
-      <Link href="/quote" className="button button-small">
-        Get a quote
-      </Link>
+      <LeadFormModal label="Get a quote" className="button button-small" />
       <Sheet
         open={drawerOpen}
         onOpenChange={(value) => {
@@ -293,11 +292,7 @@ export default function SiteHeader({
                 pathname={pathname}
               />
             ))}
-            <SheetClose asChild>
-              <Link className="button mobile-quote-button" href="/quote">
-                Get a quote
-              </Link>
-            </SheetClose>
+            <LeadFormModal label="Get a quote" className="button mobile-quote-button" />
           </nav>
         </SheetContent>
       </Sheet>

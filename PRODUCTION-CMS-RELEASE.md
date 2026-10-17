@@ -9,6 +9,14 @@
 5. Deploy the backend to staging, set the frontend `BACKEND_API_URL` to that staging origin, then deploy the frontend preview.
 6. Complete authenticated upload, CMS, preview, mobile, and refresh checks in staging before promoting either deployment.
 
+## Enquiry reports
+
+- Configure `EMAIL_PROVIDER=resend`, `EMAIL_API_KEY`, and a verified `EMAIL_FROM` address on the backend. The provider key must never be added to the frontend or committed to Git.
+- Set one strong `CRON_SECRET` value in both Vercel and the backend service. Vercel calls the protected frontend cron route, which forwards the authenticated request to the backend.
+- The Vercel cron runs a daily due-date check at `03:30 UTC` (approximately 09:00 IST). The backend stores the exact seven-day schedule, uses non-overlapping `[start, end)` report periods, and creates a unique period record before delivery to prevent duplicate scheduled sends.
+- In Admin → Settings → Enquiry Email Reports, enter the recipient, save and enable the schedule, send a test email, and review delivery history before production promotion.
+- Report email failures retain a safe error summary and may be retried from the admin screen. An `unknown` provider result is not retried automatically because the provider may already have accepted it.
+
 ## Admin workflow
 
 - **Products:** create or duplicate a draft, set technology independently from module type, upload an image, upload a PDF directly to Cloudinary, review the preview, then publish.

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LeadFormModal from "@/components/lead-form-modal";
 import Image from "next/image";
 import { ArrowRight, ArrowUpRight, CalendarDays, Download, Factory, FileText, Leaf, ShieldCheck, Sparkles } from "lucide-react";
 import AiSolarSection from "@/components/ai-solar-section";
@@ -81,7 +82,7 @@ export default async function Home() {
 
     <section className="premium-contact-cta" aria-labelledby="contact-cta-heading">
       <div><p className="premium-kicker">Start your solar project</p><h2 id="contact-cta-heading">Let&apos;s build a cleaner energy future.</h2><p>Share your application, capacity and timeline for project-focused guidance from the Solarious team.</p></div>
-      <div><Link className="premium-button" href="/quote">Get a quote <ArrowRight size={16} /></Link><Link className="premium-button secondary" href="/contact">Contact our team</Link></div>
+      <div><LeadFormModal label="Get a quote" className="premium-button"/><Link className="premium-button secondary" href="/contact">Contact our team</Link></div>
     </section>
   </main>;
 }
