@@ -6,11 +6,11 @@
 - Build Command: `npm ci && npm run build`
 - Start Command: `npm start`
 - Health Check: `/api/health`
-- Node: `22.22.0`
+- Node: `20.19.5` (matching `render.yaml`; the backend accepts Node 20–22)
 
 Required environment variables are listed in `backend/.env.example`. Configure them in Render; never commit their real values. `MONGODB_URI` must be the Atlas SRV URI for `cluster.il8ftxi.mongodb.net` and `DB_NAME` should remain `solarious`. `FRONTEND_ORIGINS` is a comma-separated allowlist of the production Vercel/custom frontend origins.
 
-Cloudinary uploads run from, and signed browser uploads are authorized by, the Render API. Configure exactly one `CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME` value in Render using credentials copied from the same Cloudinary product environment. Do not add the API secret to Vercel. After changing the value, deploy the Render service again; the API verifies the credentials with Cloudinary before issuing a short-lived upload signature.
+Cloudinary uploads run from, and signed browser uploads are authorized by, the Render API. Configure exactly one `CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME` value in Render using credentials copied from the same Cloudinary product environment. Do not add the API secret to Vercel. After changing the value, deploy the Render service again; the API verifies the credentials with Cloudinary before issuing a short-lived upload signature. Certificate previews and downloads are streamed by the API through short-lived signed Cloudinary download URLs, so protected raw-delivery ACLs remain enabled and existing database records do not need to change.
 
 Text and marketing AI use APInex only from the Render API: set `APINEX_API_KEY`, `APINEX_BASE_URL=https://api.apinex.bond/v1`, and `APINEX_MODEL=free/mimo-v2.6-pro`. The current APInex integration is content-and-image-prompt mode because its documented API does not provide a verified image-generation endpoint. Neither provider key belongs in Vercel.
 

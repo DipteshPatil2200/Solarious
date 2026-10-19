@@ -69,6 +69,23 @@ export function createSignedRawUpload({ folder, prefix, now = Date.now(), client
   };
 }
 
+export function createSignedRawDownload({ publicId, attachment = false, expiresAt = Math.floor(Date.now() / 1000) + 300, client = cloudinary }) {
+  const config = client.config();
+  if (!config.cloud_name || !config.api_key || !config.api_secret) throw credentialError("Cloud storage is not configured.");
+  if (!String(publicId || "").startsWith("solarious/")) throw credentialError("The stored document identifier is invalid.", "CLOUDINARY_RESOURCE_INVALID");
+
+  return client.utils.private_download_url(String(publicId), "", {
+    resource_type: "raw",
+    type: "upload",
+    attachment,
+    expires_at: expiresAt,
+    cloud_name: config.cloud_name,
+    api_key: config.api_key,
+    api_secret: config.api_secret,
+    secure: true,
+  });
+}
+
 let verifiedUntil = 0;
 let verification;
 

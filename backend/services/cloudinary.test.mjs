@@ -4,6 +4,7 @@ import { v2 as sdk } from "cloudinary";
 import {
   configureCloudinary,
   createSignedImageUpload,
+  createSignedRawDownload,
   createSignedRawUpload,
   parseCloudinaryUrl,
   resetCloudinaryVerificationCache,
@@ -22,6 +23,29 @@ test("creates a signed raw upload without exposing the API secret", () => {
   assert.match(signed.publicId, /^datasheet-/);
   assert.equal("apiSecret" in signed, false);
   assert.equal(signed.signature, sdk.utils.api_sign_request({folder:signed.folder,overwrite:false,public_id:signed.publicId,timestamp:signed.timestamp}, config.api_secret));
+});
+
+test("creates a short-lived signed raw download for protected documents", () => {
+  const config = { cloud_name: "demo", api_key: "12345", api_secret: "secret" };
+  const client = { config: () => config, utils: sdk.utils };
+  const url = createSignedRawDownload({
+    publicId: "solarious/resources/bis-certificate.pdf",
+    expiresAt: 1_791_890_428,
+    client,
+  });
+  assert.match(url, /^https:\/\/api\.cloudinary\.com\/v1_1\/demo\/raw\/download/);
+  assert.match(url, /public_id=solarious%2Fresources%2Fbis-certificate\.pdf/);
+  assert.match(url, /expires_at=1791890428/);
+  assert.doesNotMatch(url, /secret/);
+});
+
+test("rejects a raw download outside the managed Solarious folder", () => {
+  const config = { cloud_name: "demo", api_key: "12345", api_secret: "secret" };
+  const client = { config: () => config, utils: sdk.utils };
+  assert.throws(
+    () => createSignedRawDownload({ publicId: "untrusted/document.pdf", client }),
+    error => error.code === "CLOUDINARY_RESOURCE_INVALID",
+  );
 });
 
 test("explicitly configures one decoded CLOUDINARY_URL credential source", () => {

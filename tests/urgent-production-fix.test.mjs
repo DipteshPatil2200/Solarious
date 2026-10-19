@@ -18,9 +18,14 @@ test("festival requests use the long creative timeout and structured errors", as
 });
 
 test("festival billing failures cannot silently fall back to a template", async () => {
-  const server = await read("backend/server.mjs");
-  assert.match(server, /FESTIVAL_TEMPLATE_FALLBACK==="true"/);
-  assert.match(server, /if\(!fallbackAllowed\)throw error/);
+  const [server, provider] = await Promise.all([
+    read("backend/server.mjs"),
+    read("backend/services/image-generation.mjs"),
+  ]);
+  assert.doesNotMatch(server, /FESTIVAL_TEMPLATE_FALLBACK/);
+  assert.doesNotMatch(server, /deterministic-fallback/);
+  assert.match(provider, /PROVIDER_PAYMENT_REQUIRED/);
+  assert.match(provider, /retryable: false/);
 });
 
 test("transparent home header removes the logo card without global image hacks", async () => {
