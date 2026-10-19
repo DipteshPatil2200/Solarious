@@ -94,3 +94,34 @@ test("sends the selected supported aspect ratio and accepts image bytes", async 
     console.info = previousInfo;
   }
 });
+
+test("retries a transient rate limit once and keeps one client request id", async () => {
+  process.env.IMAGE_PROVIDER = "stability";
+  process.env.IMAGE_MODEL = "core";
+  process.env.IMAGE_API_KEY = "test-key";
+  const requestIds = [];
+  let calls = 0;
+  globalThis.fetch = async (_url, options) => {
+    calls += 1;
+    requestIds.push(options.headers["X-Client-Request-ID"]);
+    if (calls === 1)
+      return new Response(JSON.stringify({ message: "slow down" }), {
+        status: 429,
+        headers: { "content-type": "application/json", "retry-after": "0" },
+      });
+    return new Response(Uint8Array.from([82, 73, 70, 70]), {
+      status: 200,
+      headers: { "content-type": "image/webp" },
+    });
+  };
+  const previousError = console.error, previousInfo = console.info;
+  console.error = () => {}; console.info = () => {};
+  try {
+    const image = await generateMarketingImage({ prompt: "Solar campaign" });
+    assert.equal(calls, 2);
+    assert.equal(requestIds[0], requestIds[1]);
+    assert.equal(image.buffer.length, 4);
+  } finally {
+    console.error = previousError; console.info = previousInfo;
+  }
+});

@@ -1,136 +1,77 @@
-const defaultProvider = "stability";
-const defaultModel = "core";
+import { randomUUID } from "node:crypto";
+
+const provider = "stability";
 const apiBase = "https://api.stability.ai/v2beta/stable-image/generate";
 const supportedModels = new Set(["core", "ultra"]);
-const supportedAspectRatios = new Set(["1:1", "4:5", "16:9", "9:16"]);
+const supportedRatios = new Set(["1:1", "4:5", "16:9", "9:16"]);
+const maxBytes = 12 * 1024 * 1024;
 
-const providerError = (message, code, status, details = {}) =>
-  Object.assign(new Error(message), {
-    code,
-    status,
-    stage: "image_generation",
-    retryable: false,
-    ...details,
-  });
-
-const sanitized = value =>
-  String(value || "")
-    .replace(/bearer\s+[a-z0-9._-]+/gi, "Bearer [redacted]")
-    .replace(/(api[_ -]?key|token|secret)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]")
-    .replace(/[\r\n\t]+/g, " ")
-    .slice(0, 300);
-
-const providerDetails = async response => {
+const failure = (message, code, status, details = {}) => Object.assign(new Error(message), {
+  code, status, stage: "image_generation", retryable: false, ...details,
+});
+const clean = value => String(value || "").replace(/bearer\s+[a-z0-9._-]+/gi, "Bearer [redacted]").replace(/(api[_ -]?key|token|secret)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]").replace(/[\r\n\t]+/g, " ").slice(0, 300);
+const details = async response => {
   const raw = await response.text().catch(() => "");
   try {
     const body = JSON.parse(raw);
-    const message = Array.isArray(body?.errors)
-      ? body.errors.join("; ")
-      : body?.error?.message || body?.message || body?.error || raw;
-    return {
-      providerCode: String(body?.error?.code || body?.code || body?.name || "").slice(0, 80),
-      providerMessage: sanitized(message),
-    };
-  } catch {
-    return { providerCode: "", providerMessage: sanitized(raw) };
-  }
+    return { providerCode: String(body?.error?.code || body?.code || body?.name || "").slice(0, 80), providerMessage: clean(Array.isArray(body?.errors) ? body.errors.join("; ") : body?.error?.message || body?.message || body?.error || raw) };
+  } catch { return { providerCode: "", providerMessage: clean(raw) }; }
 };
 
-export const classifyProviderFailure = (status, details = {}) => {
-  const common = { provider: defaultProvider, providerStatus: status, ...details };
-  if (status === 400 || status === 422)
-    return providerError("The image provider rejected the generation request.", "PROVIDER_INVALID_REQUEST", 400, common);
-  if (status === 401)
-    return providerError("Image provider authentication failed.", "PROVIDER_AUTHENTICATION_ERROR", 401, common);
-  if (status === 402)
-    return providerError("Image generation credits are unavailable.", "PROVIDER_PAYMENT_REQUIRED", 402, common);
-  if (status === 403)
-    return providerError("The image provider denied this generation request.", "PROVIDER_PERMISSION_DENIED", 403, common);
-  if (status === 408)
-    return providerError("Image generation timed out.", "PROVIDER_TIMEOUT", 408, { ...common, retryable: true });
-  if (status === 429)
-    return providerError("The image provider rate limit was reached.", "PROVIDER_RATE_LIMITED", 429, { ...common, retryable: true });
-  return providerError("The image provider is temporarily unavailable.", "PROVIDER_UPSTREAM_ERROR", 502, { ...common, retryable: true });
+export const classifyProviderFailure = (status, extra = {}) => {
+  const common = { provider, providerStatus: status, ...extra };
+  if ([400, 422].includes(status)) return failure("The image provider rejected the generation request.", "PROVIDER_INVALID_REQUEST", 400, common);
+  if (status === 401) return failure("Image provider authentication failed.", "PROVIDER_AUTHENTICATION_ERROR", 401, common);
+  if (status === 402) return failure("Image generation credits are unavailable.", "PROVIDER_PAYMENT_REQUIRED", 402, common);
+  if (status === 403) return failure("The image provider denied this generation request.", "PROVIDER_PERMISSION_DENIED", 403, common);
+  if (status === 413) return failure("The generated image exceeded the supported size.", "PROVIDER_RESPONSE_TOO_LARGE", 413, common);
+  if ([408, 504].includes(status)) return failure("Image generation timed out.", "PROVIDER_TIMEOUT", 504, { ...common, retryable: true });
+  if (status === 429) return failure("The image provider rate limit was reached.", "PROVIDER_RATE_LIMITED", 429, { ...common, retryable: true });
+  return failure("The image provider is temporarily unavailable.", "PROVIDER_UPSTREAM_ERROR", [500, 502, 503].includes(status) ? status : 502, { ...common, retryable: true });
 };
 
 export const imageConfiguration = () => {
-  const provider = (process.env.IMAGE_PROVIDER?.trim() || "").toLowerCase();
-  const model = (process.env.IMAGE_MODEL?.trim() || defaultModel).toLowerCase();
-  return {
-    provider,
-    configured: Boolean(provider && process.env.IMAGE_API_KEY?.trim()),
-    model,
-    capability: provider === defaultProvider && supportedModels.has(model) ? "text-to-image" : "unsupported",
-  };
+  const configuredProvider = (process.env.IMAGE_PROVIDER?.trim() || "").toLowerCase();
+  const model = (process.env.IMAGE_MODEL?.trim() || "core").toLowerCase();
+  return { provider: configuredProvider, configured: Boolean(configuredProvider && process.env.IMAGE_API_KEY?.trim()), model, capability: configuredProvider === provider && supportedModels.has(model) ? "text-to-image" : "unsupported" };
 };
+const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+const retryDelay = (attempt, retryAfter) => Number.isFinite(Number(retryAfter)) ? Math.min(Number(retryAfter) * 1000, 10_000) : Math.min(800 * 2 ** (attempt - 1), 5_000);
 
 export async function generateMarketingImage({ prompt, aspectRatio = "1:1" }) {
-  const { provider, configured, model, capability } = imageConfiguration();
-  if (!configured)
-    throw providerError("Image generation is not configured.", "IMAGE_PROVIDER_NOT_CONFIGURED", 503, { provider, model });
-  if (provider !== defaultProvider || capability !== "text-to-image")
-    throw providerError("The configured provider or model does not support image generation.", "IMAGE_PROVIDER_CAPABILITY_UNSUPPORTED", 503, { provider, model });
-  if (!supportedAspectRatios.has(aspectRatio))
-    throw providerError("The selected image aspect ratio is not supported.", "PROVIDER_INVALID_REQUEST", 400, { provider, model });
-
-  const form = new FormData();
-  form.set("prompt", prompt);
-  form.set("output_format", "webp");
-  form.set("aspect_ratio", aspectRatio);
-  form.set("negative_prompt", "text, words, letters, logo, watermark, phone number, distorted people, distorted solar panels");
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90_000);
-  const started = Date.now();
-  try {
-    const response = await fetch(`${apiBase}/${model}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${process.env.IMAGE_API_KEY}`, Accept: "image/*" },
-      body: form,
-      signal: controller.signal,
-    });
-    const requestId = sanitized(response.headers.get("x-request-id") || response.headers.get("stability-request-id"));
-    const durationMs = Date.now() - started;
-    if (!response.ok) {
-      const details = await providerDetails(response);
-      const classified = classifyProviderFailure(response.status, { ...details, requestId, durationMs, model });
-      console.error("[image:provider:error]", {
-        provider,
-        model,
-        status: response.status,
-        providerCode: details.providerCode,
-        message: details.providerMessage,
-        requestId,
-        durationMs,
-      });
-      throw classified;
-    }
-    const contentType = response.headers.get("content-type") || "";
-    if (!contentType.startsWith("image/"))
-      throw classifyProviderFailure(502, { providerCode: "INVALID_RESPONSE_TYPE", providerMessage: sanitized(contentType), requestId, durationMs, model });
-    const bytes = Buffer.from(await response.arrayBuffer());
-    if (!bytes.length)
-      throw classifyProviderFailure(502, { providerCode: "EMPTY_IMAGE", providerMessage: "Provider returned an empty image.", requestId, durationMs, model });
-    console.info("[image:provider:success]", { provider, model, status: response.status, requestId, durationMs });
-    return { buffer: bytes, provider, model, mimeType: contentType };
-  } catch (error) {
-    if (error?.stage) throw error;
-    const durationMs = Date.now() - started;
-    if (error?.name === "AbortError") {
-      const classified = classifyProviderFailure(408, { model, durationMs });
-      console.error("[image:provider:error]", { provider, model, status: 408, providerCode: classified.code, message: classified.message, requestId: "", durationMs });
-      throw classified;
-    }
-    console.error("[image:provider:error]", {
-      provider,
-      model,
-      status: 503,
-      providerCode: "PROVIDER_NETWORK_ERROR",
-      message: sanitized(error?.message || "Unknown provider network error"),
-      requestId: "",
-      durationMs,
-    });
-    throw providerError("The image provider is temporarily unavailable.", "PROVIDER_UNAVAILABLE", 503, { provider, model, retryable: true, durationMs });
-  } finally {
-    clearTimeout(timeout);
+  const config = imageConfiguration();
+  const requestId = randomUUID();
+  if (!config.configured) throw failure("Image generation is not configured.", "IMAGE_PROVIDER_NOT_CONFIGURED", 503, { ...config, requestId });
+  if (config.provider !== provider || config.capability !== "text-to-image") throw failure("The configured provider or model does not support image generation.", "IMAGE_PROVIDER_CAPABILITY_UNSUPPORTED", 503, { ...config, requestId });
+  if (!supportedRatios.has(aspectRatio)) throw failure("The selected image aspect ratio is not supported.", "PROVIDER_INVALID_REQUEST", 400, { ...config, requestId });
+  if (!String(prompt || "").trim() || String(prompt).length > 4000) throw failure("The image prompt is missing or too long.", "PROVIDER_INVALID_REQUEST", 400, { ...config, requestId });
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const form = new FormData();
+    form.set("prompt", prompt); form.set("output_format", "webp"); form.set("aspect_ratio", aspectRatio);
+    form.set("negative_prompt", "text, words, letters, logo, watermark, phone number, distorted people, distorted solar panels");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 75_000);
+    const started = Date.now();
+    try {
+      const response = await fetch(`${apiBase}/${config.model}`, { method: "POST", headers: { Authorization: `Bearer ${process.env.IMAGE_API_KEY}`, Accept: "image/*", "X-Client-Request-ID": requestId }, body: form, signal: controller.signal });
+      const providerRequestId = clean(response.headers.get("x-request-id") || response.headers.get("stability-request-id"));
+      const durationMs = Date.now() - started;
+      if (!response.ok) throw classifyProviderFailure(response.status, { ...(await details(response)), clientRequestId:requestId, requestId:providerRequestId||requestId, providerRequestId, durationMs, model: config.model, retryAfter: response.headers.get("retry-after"), attempt });
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.startsWith("image/")) throw classifyProviderFailure(502, { providerCode: "INVALID_RESPONSE_TYPE", requestId, providerRequestId, durationMs, model: config.model, attempt });
+      if (Number(response.headers.get("content-length") || 0) > maxBytes) throw classifyProviderFailure(413, { requestId, providerRequestId, durationMs, model: config.model, attempt });
+      const buffer = Buffer.from(await response.arrayBuffer());
+      if (!buffer.length) throw classifyProviderFailure(502, { providerCode: "EMPTY_IMAGE", requestId, providerRequestId, durationMs, model: config.model, attempt });
+      if (buffer.length > maxBytes) throw classifyProviderFailure(413, { requestId, providerRequestId, durationMs, model: config.model, attempt });
+      console.info("[image:provider:success]", { provider, model: config.model, requestId, providerRequestId, durationMs, attempt });
+      return { buffer, provider, model: config.model, mimeType: contentType, requestId, providerRequestId };
+    } catch (caught) {
+      let error = caught;
+      if (!error?.stage && error?.name === "AbortError") error = classifyProviderFailure(504, { model: config.model, requestId, durationMs: Date.now() - started, attempt });
+      else if (!error?.stage) error = failure("The image provider is temporarily unavailable.", "PROVIDER_UNAVAILABLE", 503, { provider, model: config.model, requestId, retryable: true, durationMs: Date.now() - started, attempt });
+      console.error("[image:provider:error]", { provider, model: config.model, status: error.status, code: error.code, requestId, attempt });
+      if (!error.retryable || attempt === 3) throw error;
+      await wait(retryDelay(attempt, error.retryAfter));
+    } finally { clearTimeout(timeout); }
   }
 }

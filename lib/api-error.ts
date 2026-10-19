@@ -10,6 +10,7 @@ export async function apiError(
           message?: string;
           code?: string;
           retryable?: boolean;
+          requestId?: string;
         };
       };
       if (typeof body.error === "string") return new Error(body.error);
@@ -17,9 +18,11 @@ export async function apiError(
         const error = new Error(body.error.message) as Error & {
           code?: string;
           retryable?: boolean;
+          requestId?: string;
         };
         error.code = body.error.code;
         error.retryable = body.error.retryable;
+        error.requestId = body.error.requestId;
         return error;
       }
     } else {

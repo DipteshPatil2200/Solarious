@@ -1,10 +1,11 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { ImageUp, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ImageUp, Loader2, Plus, RefreshCw, Save, Trash2 } from "lucide-react";
 import { adminFetch } from "@/lib/admin-fetch";
 import { apiError } from "@/lib/api-error";
 
-type Section = { title: string; text: string };
+type Section = { title: string; text: string; imageUrl?: string; displayOrder?: number; published?: boolean };
 type Timeline = {
   year: string;
   title: string;
@@ -94,24 +95,6 @@ const linesToSections = (value: string): Section[] =>
     .filter((item) => item.title && item.text);
 const sectionsToLines = (items: Section[]) =>
   items.map((item) => `${item.title} | ${item.text}`).join("\n");
-const linesToTimeline = (value: string): Timeline[] =>
-  value
-    .split("\n")
-    .map((line, index) => {
-      const [year, title, text, imageUrl, displayOrder, published] = line
-        .split("|")
-        .map((part) => part.trim());
-      return {
-        year,
-        title,
-        text,
-        imageUrl: imageUrl || "",
-        displayOrder: Number(displayOrder) || index,
-        published: published !== "false",
-      };
-    })
-    .filter((item) => item.year && item.title && item.text);
-
 export default function AdminSiteCms() {
   const [about, setAbout] = useState(aboutDefault),
     [manufacturing, setManufacturing] = useState(manufacturingDefault),
@@ -126,25 +109,29 @@ export default function AdminSiteCms() {
     [editingLocation, setEditingLocation] = useState<Location | null>(null),
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
-    [notice, setNotice] = useState("");
+    [notice, setNotice] = useState(""),
+    [tab, setTab] = useState<"about"|"journey"|"roadmap"|"locations"|"branding"|"seo">("about"),
+    [seo, setSeo] = useState({title:"Solarious Energy",description:"Advanced solar modules and clean-energy solutions for India.",keywords:"solar energy, solar modules, renewable energy",ogImage:"/solarious-logo.png"});
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [a, m, b, l] = await Promise.all([
+      const [a, m, b, l, s] = await Promise.all([
         adminFetch("/api/admin/settings/aboutPage"),
         adminFetch("/api/admin/settings/manufacturingPage"),
         adminFetch("/api/admin/settings/branding"),
         adminFetch("/api/admin/locations"),
+        adminFetch("/api/admin/settings/seoSettings"),
       ]);
       if (!l.ok) throw await apiError(l, "Locations could not be loaded");
-      const [ad, md, bd, ld] = await Promise.all([
+      const [ad, md, bd, ld, sd] = await Promise.all([
         a.json(),
         m.json(),
         b.json(),
         l.json(),
+        s.json(),
       ]);
       if (ad.setting?.value)
-        setAbout((current) => ({ ...current, ...ad.setting.value }));
+        setAbout((current) => ({ ...current, ...ad.setting.value, sections:(ad.setting.value.sections||[]).map((item:Section,index:number)=>({...item,displayOrder:item.displayOrder??index,published:item.published!==false})) }));
       if (md.setting?.value)
         setManufacturing((current) => {
           const next = { ...current, ...md.setting.value };
@@ -167,6 +154,7 @@ export default function AdminSiteCms() {
       if (bd.setting?.value)
         setBranding((current) => ({ ...current, ...bd.setting.value }));
       setLocations(ld.locations || []);
+      if(sd.setting?.value)setSeo((current)=>({...current,...sd.setting.value}));
     } catch (error) {
       setNotice(
         error instanceof Error
@@ -275,6 +263,13 @@ export default function AdminSiteCms() {
       setBusy(false);
     }
   };
+  const uploadContent = async (file: File, apply: (url:string)=>void) => {
+    if(!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>5*1024*1024){setNotice("Choose a JPG, PNG or WebP image below 5 MB.");return}
+    setBusy(true);
+    try{const data=new FormData();data.append("file",file,file.name);const response=await adminFetch("/api/admin/site-content/upload",{method:"POST",body:data});if(!response.ok)throw await apiError(response,"Image upload failed");const uploaded=await response.json();apply(uploaded.url);setNotice("Image uploaded. Save this tab to publish it.")}
+    catch(error){setNotice(error instanceof Error?error.message:"Image upload failed.")}
+    finally{setBusy(false)}
+  };
   if (loading)
     return (
       <section className="admin-panel">
@@ -295,14 +290,19 @@ export default function AdminSiteCms() {
         </div>
       </div>
       {notice && <div className="admin-notice">{notice}</div>}
+      <nav className="cms-tabs" aria-label="Website content sections">
+        {([["about","About Page"],["journey","Company Journey"],["roadmap","Roadmap"],["locations","Business Locations"],["branding","Brand Assets"],["seo","SEO Settings"]] as const).map(([key,label])=><button type="button" className={tab===key?"active":""} aria-current={tab===key?"page":undefined} onClick={()=>setTab(key)} key={key}>{label}</button>)}
+      </nav>
       <form
         className="admin-cms-block"
+        hidden={tab!=="about"&&tab!=="journey"}
         onSubmit={(event) => {
           event.preventDefault();
           void saveSetting("aboutPage", about);
         }}
       >
-        <h3>About page</h3>
+        <div className="cms-section-head"><div><span>{tab==="about"?"Page content":"Company history"}</span><h3>{tab==="about"?"About Page":"Company Journey"}</h3></div><button type="button" className="button button-ghost" onClick={()=>void load()}><RefreshCw size={16}/>Refresh</button></div>
+        <div hidden={tab!=="about"}>
         <div className="admin-form-grid">
           <label>
             Eyebrow
@@ -336,38 +336,21 @@ export default function AdminSiteCms() {
             onChange={(e) => setAbout({ ...about, intro: e.target.value })}
           />
         </label>
-        <label>
-          Sections — one per line: Title | Content
-          <textarea
-            rows={7}
-            value={sectionsToLines(about.sections)}
-            onChange={(e) =>
-              setAbout({ ...about, sections: linesToSections(e.target.value) })
-            }
-          />
-        </label>
-        <label>
-          Journey — one per line: Year | Title | Content | Image URL | Sort
-          order | published
-          <textarea
-            rows={5}
-            value={(about.timeline || [])
-              .map(
-                (item) =>
-                  `${item.year} | ${item.title} | ${item.text} | ${item.imageUrl || ""} | ${item.displayOrder ?? 0} | ${item.published !== false}`,
-              )
-              .join("\n")}
-            onChange={(e) =>
-              setAbout({ ...about, timeline: linesToTimeline(e.target.value) })
-            }
-          />
-        </label>
+        <div className="cms-image-row">{about.heroImage&&<img src={about.heroImage} alt="About hero preview"/>}<label className="admin-file-label"><ImageUp size={16}/>Upload or replace hero image<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>{const file=e.target.files?.[0];if(file)void uploadContent(file,url=>setAbout(current=>({...current,heroImage:url})));e.currentTarget.value=""}}/></label></div>
+        <div className="cms-repeat-head"><div><h4>Content sections</h4><p>Build the page with ordered, publishable content cards.</p></div><button type="button" className="button button-ghost" onClick={()=>setAbout({...about,sections:[...about.sections,{title:"",text:"",imageUrl:"",displayOrder:about.sections.length,published:true}]})}><Plus size={16}/>Add section</button></div>
+        <div className="cms-card-list">{about.sections.map((item,index)=><article className="cms-editor-card" key={index}><header><strong>Section {index+1}</strong><div><button type="button" disabled={index===0} onClick={()=>{const next=[...about.sections];[next[index-1],next[index]]=[next[index],next[index-1]];setAbout({...about,sections:next.map((x,i)=>({...x,displayOrder:i}))});}}><ArrowUp size={15}/></button><button type="button" disabled={index===about.sections.length-1} onClick={()=>{const next=[...about.sections];[next[index+1],next[index]]=[next[index],next[index+1]];setAbout({...about,sections:next.map((x,i)=>({...x,displayOrder:i}))});}}><ArrowDown size={15}/></button><button type="button" className="danger" onClick={()=>setAbout({...about,sections:about.sections.filter((_,i)=>i!==index)})}><Trash2 size={15}/></button></div></header><label>Section title<input value={item.title} onChange={e=>setAbout({...about,sections:about.sections.map((x,i)=>i===index?{...x,title:e.target.value}:x)})}/></label><label>Content<textarea rows={4} value={item.text} onChange={e=>setAbout({...about,sections:about.sections.map((x,i)=>i===index?{...x,text:e.target.value}:x)})}/></label><label>Image URL<input value={item.imageUrl||""} onChange={e=>setAbout({...about,sections:about.sections.map((x,i)=>i===index?{...x,imageUrl:e.target.value}:x)})}/></label><label className="cms-check"><input type="checkbox" checked={item.published!==false} onChange={e=>setAbout({...about,sections:about.sections.map((x,i)=>i===index?{...x,published:e.target.checked}:x)})}/>Published</label></article>)}</div>
+        </div>
+        <div hidden={tab!=="journey"}>
+        <div className="cms-repeat-head"><div><h4>Timeline entries</h4><p>Use the controls to maintain public display order.</p></div><button type="button" className="button button-ghost" onClick={()=>setAbout({...about,timeline:[...(about.timeline||[]),{year:"",title:"",text:"",imageUrl:"",displayOrder:(about.timeline||[]).length,published:true}]})}><Plus size={16}/>Add milestone</button></div>
+        <div className="cms-card-list">{(about.timeline||[]).map((item,index)=><article className="cms-editor-card" key={index}><header><strong>Milestone {index+1}</strong><button type="button" className="danger" onClick={()=>setAbout({...about,timeline:(about.timeline||[]).filter((_,i)=>i!==index)})}><Trash2 size={15}/></button></header><div className="admin-form-grid"><label>Year<input value={item.year} onChange={e=>setAbout({...about,timeline:(about.timeline||[]).map((x,i)=>i===index?{...x,year:e.target.value}:x)})}/></label><label>Title<input value={item.title} onChange={e=>setAbout({...about,timeline:(about.timeline||[]).map((x,i)=>i===index?{...x,title:e.target.value}:x)})}/></label></div><label>Description<textarea rows={3} value={item.text} onChange={e=>setAbout({...about,timeline:(about.timeline||[]).map((x,i)=>i===index?{...x,text:e.target.value}:x)})}/></label><label>Image URL<input value={item.imageUrl} onChange={e=>setAbout({...about,timeline:(about.timeline||[]).map((x,i)=>i===index?{...x,imageUrl:e.target.value}:x)})}/></label><label className="cms-check"><input type="checkbox" checked={item.published} onChange={e=>setAbout({...about,timeline:(about.timeline||[]).map((x,i)=>i===index?{...x,published:e.target.checked}:x)})}/>Published</label></article>)}</div>
+        </div>
         <button className="button" disabled={busy}>
-          <Save size={16} /> Save About page
+          <Save size={16} /> Save {tab==="journey"?"journey":"About page"}
         </button>
       </form>
       <form
         className="admin-cms-block"
+        hidden={tab!=="roadmap"}
         onSubmit={(event) => {
           event.preventDefault();
           void saveSetting("manufacturingPage", manufacturing);
@@ -465,7 +448,7 @@ export default function AdminSiteCms() {
           <Save size={16} /> Save Manufacturing page
         </button>
       </form>
-      <div className="admin-cms-block">
+      <div className="admin-cms-block" hidden={tab!=="locations"}>
         <div className="admin-panel-head">
           <div>
             <h3>Business locations</h3>
@@ -515,6 +498,7 @@ export default function AdminSiteCms() {
       </div>
       <form
         className="admin-cms-block"
+        hidden={tab!=="branding"}
         onSubmit={(event) => {
           event.preventDefault();
           void saveSetting("branding", branding);
@@ -584,6 +568,11 @@ export default function AdminSiteCms() {
         <button className="button" disabled={busy}>
           <Save size={16} /> Save branding
         </button>
+      </form>
+      <form className="admin-cms-block" hidden={tab!=="seo"} onSubmit={event=>{event.preventDefault();void saveSetting("seoSettings",seo)}}>
+        <div className="cms-section-head"><div><span>Search appearance</span><h3>SEO Settings</h3><p>Set the default search and social sharing content.</p></div></div>
+        <div className="admin-form-grid"><label>Site title<input value={seo.title} onChange={e=>setSeo({...seo,title:e.target.value})}/></label><label>Social image URL<input value={seo.ogImage} onChange={e=>setSeo({...seo,ogImage:e.target.value})}/></label><label className="full">Meta description<textarea rows={4} value={seo.description} onChange={e=>setSeo({...seo,description:e.target.value})}/></label><label className="full">Keywords<input value={seo.keywords} onChange={e=>setSeo({...seo,keywords:e.target.value})}/></label></div>
+        <button className="button" disabled={busy}><Save size={16}/>Save SEO settings</button>
       </form>
       {editingLocation && (
         <div className="admin-modal-backdrop">

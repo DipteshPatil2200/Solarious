@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+/* eslint-disable @next/next/no-img-element */
 import { CheckCircle2 } from "lucide-react";
 import CertificatesSection from "@/components/certificates-section";
 import PageShell from "@/components/page-shell";
@@ -22,6 +23,7 @@ export default async function Page() {
         <div className="content-grid">
           {content.sections.map((section, index) => (
             <article className="content-card" key={`${section.title}-${index}`}>
+              {section.imageUrl && <img src={section.imageUrl} alt="" loading="lazy" />}
               <span>{String(index + 1).padStart(2, "0")}</span>
               <CheckCircle2 size={22} />
               <h2>{section.title}</h2>

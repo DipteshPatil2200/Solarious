@@ -2,7 +2,7 @@ import "server-only";
 import { backendApiUrl } from "@/lib/server-config";
 import { manufacturingSteps, pageContent } from "@/data/site";
 
-export type CmsSection = { title: string; text: string };
+export type CmsSection = { title: string; text: string; imageUrl?: string; displayOrder?: number; published?: boolean };
 export type TimelineItem = {
   year: string;
   title: string;
@@ -53,6 +53,7 @@ export type BrandingCms = {
   faviconUrl: string;
   partnerLogoUrls: string[];
 };
+export type SeoCms={title:string;description:string;keywords:string;ogImage:string};
 
 export const defaultAboutCms: AboutCms = {
   eyebrow: pageContent.about.eyebrow,
@@ -101,6 +102,7 @@ export const defaultBrandingCms: BrandingCms = {
   faviconUrl: "/favicon.svg",
   partnerLogoUrls: [],
 };
+export const defaultSeoCms:SeoCms={title:"Solarious Energy | Solar Modules for Every Project",description:"Explore Solarious Energy solar module technologies, manufacturing capabilities and project support.",keywords:"solar energy, solar modules, renewable energy",ogImage:"/solarious-logo.png"};
 
 async function setting<T>(key: string, fallback: T): Promise<T> {
   try {
@@ -123,6 +125,7 @@ export async function getAboutCms() {
   const value = await setting<AboutCms>("aboutPage", defaultAboutCms);
   return {
     ...value,
+    sections:(Array.isArray(value.sections)?value.sections:[]).map((item,index)=>({...item,imageUrl:item.imageUrl||"",displayOrder:item.displayOrder??index,published:item.published!==false})).filter(item=>item.published).sort((a,b)=>(a.displayOrder||0)-(b.displayOrder||0)),
     timeline: (Array.isArray(value.timeline) ? value.timeline : [])
       .map((item, index) => ({
         ...item,
@@ -157,6 +160,7 @@ export async function getManufacturingCms() {
   };
 }
 export const getBrandingCms = () => setting("branding", defaultBrandingCms);
+export const getSeoCms=()=>setting("seoSettings",defaultSeoCms);
 export async function getLocations(): Promise<SiteLocation[]> {
   try {
     const backend = backendApiUrl();

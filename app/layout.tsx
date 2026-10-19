@@ -23,7 +23,7 @@ import "./events.css";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import FloatingAssistant from "@/components/floating-assistant";
-import { getBrandingCms } from "@/lib/site-cms";
+import { getBrandingCms, getSeoCms } from "@/lib/site-cms";
 
 const baseMetadata: Metadata = {
   title: {
@@ -46,10 +46,14 @@ const baseMetadata: Metadata = {
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const branding = await getBrandingCms();
+  const [branding,seo] = await Promise.all([getBrandingCms(),getSeoCms()]);
   return {
     ...baseMetadata,
+    title:{default:seo.title,template:"%s | Solarious Energy"},
+    description:seo.description,
+    keywords:seo.keywords.split(",").map(value=>value.trim()).filter(Boolean),
     icons: { icon: branding.faviconUrl, shortcut: branding.faviconUrl },
+    openGraph:{...baseMetadata.openGraph,title:seo.title,description:seo.description,images:seo.ogImage?[seo.ogImage]:undefined},
   };
 }
 
