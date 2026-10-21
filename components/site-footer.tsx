@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Globe, Mail, MessageCircle } from "lucide-react";
-import { company } from "@/data/site";
+import type { CompanyCms } from "@/lib/site-cms";
 
 const groups = [
   {
@@ -48,9 +48,13 @@ const LinkedInIcon = () => (
 
 export default function SiteFooter({
   logoUrl = "/solarious-logo.png",
+  company,
 }: {
   logoUrl?: string;
+  company: CompanyCms;
 }) {
+  const whatsapp = company.whatsapp.replace(/\D/g, "");
+  const socialLinks = Object.entries(company.social).filter((entry): entry is [string, string] => Boolean(entry[1]));
   return (
     <footer className="site-footer">
       <section className="footer-brand" aria-label="Company information">
@@ -62,14 +66,16 @@ export default function SiteFooter({
           height={100}
         />
         <p className="footer-tagline">{company.tagline}</p>
-        <p className="footer-address">{company.headOffice}</p>
-        <a href={`mailto:${company.email}`}>{company.email}</a>
+        <p>{company.footerDescription || company.description}</p>
+        <p className="footer-address">{company.registeredOffice}</p>
+        {company.primaryPhone && <a href={`tel:${company.primaryPhone}`}>{company.primaryPhone}</a>}
+        <a href={`mailto:${company.generalEmail}`}>{company.generalEmail}</a>
         <a href={company.websiteUrl} target="_blank" rel="noreferrer">
           {company.website}
         </a>
         <div className="footer-socials" aria-label="Company links">
           <a
-            href={`mailto:${company.email}`}
+            href={`mailto:${company.generalEmail}`}
             aria-label="Email Solarious Energy"
           >
             <Mail size={17} />
@@ -82,22 +88,17 @@ export default function SiteFooter({
           >
             <Globe size={17} />
           </a>
-          <a
-            href="https://wa.me/?text=Hello%20Solarious%20Energy%2C%20I%20would%20like%20to%20discuss%20a%20solar%20requirement."
+          {whatsapp && <a
+            href={`https://wa.me/${whatsapp}?text=Hello%20Solarious%20Energy%2C%20I%20would%20like%20to%20discuss%20a%20solar%20requirement.`}
             target="_blank"
             rel="noreferrer"
             aria-label="Contact Solarious Energy on WhatsApp"
           >
             <MessageCircle size={17} />
-          </a>
-          <a
-            href="https://www.linkedin.com/search/results/companies/?keywords=Solarious%20Energy"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Find Solarious Energy on LinkedIn"
-          >
-            <LinkedInIcon />
-          </a>
+          </a>}
+          {socialLinks.map(([network,href])=><a key={network} href={href} target="_blank" rel="noreferrer" aria-label={`Visit Solarious Energy on ${network}`}>
+            {network==="linkedin"?<LinkedInIcon/>:<Globe size={17}/>}
+          </a>)}
         </div>
       </section>
       {groups.map((group) => (

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { backendApiUrl } from "@/lib/server-config";
 
 const methodsWithBody = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -15,7 +16,13 @@ async function forward(request: Request, { params }: { params: Promise<{ path: s
 
   const { path } = await params;
   const pathname = `/api/${path.join("/")}`;
-  const target = new URL(`${pathname}${new URL(request.url).search}`, base);
+  const requestUrl = new URL(request.url);
+  const isAdminMutation = pathname.startsWith("/api/admin/") && methodsWithBody.has(request.method);
+  const origin = request.headers.get("origin");
+  if (isAdminMutation && origin && origin !== requestUrl.origin) {
+    return NextResponse.json({ error: "Cross-origin admin request denied." }, { status: 403 });
+  }
+  const target = new URL(`${pathname}${requestUrl.search}`, base);
   const isCreativeGeneration =
     request.method === "POST" &&
     (pathname === "/api/admin/creatives" ||
@@ -29,6 +36,10 @@ async function forward(request: Request, { params }: { params: Promise<{ path: s
   headers.delete("host");
   headers.delete("content-length");
   headers.delete("authorization");
+  // The browser request has already passed a strict same-origin check above.
+  // This is now a trusted server-to-server hop, so do not make the backend CORS
+  // allowlist depend on every Vercel preview or custom frontend hostname.
+  headers.delete("origin");
 
   const init: RequestInit & { duplex?: "half" } = {
     method: request.method,
@@ -45,6 +56,16 @@ async function forward(request: Request, { params }: { params: Promise<{ path: s
   try {
     const started = Date.now();
     const response = await fetch(target, init);
+    if (response.ok && isAdminMutation && (/^\/api\/admin\/settings\//.test(pathname) || pathname.startsWith("/api/admin/locations") || pathname === "/api/admin/resources")) {
+      try {
+        revalidatePath("/", "layout");
+      } catch (revalidationError) {
+        console.error("CMS cache revalidation failed", {
+          pathname,
+          detail: revalidationError instanceof Error ? revalidationError.message : "unknown error",
+        });
+      }
+    }
     if (isCreativeGeneration) console.error("[creative-proxy]", { backendHost: target.host, status: response.status, durationMs: Date.now() - started });
     const responseHeaders = new Headers(response.headers);
     responseHeaders.delete("content-encoding");

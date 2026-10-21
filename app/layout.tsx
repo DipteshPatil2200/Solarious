@@ -23,7 +23,7 @@ import "./events.css";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import FloatingAssistant from "@/components/floating-assistant";
-import { getBrandingCms, getSeoCms } from "@/lib/site-cms";
+import { getBrandingCms, getCompanyCms, getSeoCms } from "@/lib/site-cms";
 
 const baseMetadata: Metadata = {
   title: {
@@ -52,15 +52,17 @@ export async function generateMetadata(): Promise<Metadata> {
     title:{default:seo.title,template:"%s | Solarious Energy"},
     description:seo.description,
     keywords:seo.keywords.split(",").map(value=>value.trim()).filter(Boolean),
+    alternates: seo.canonicalUrl ? { canonical: seo.canonicalUrl } : undefined,
+    robots: { index: seo.robotsIndex, follow: seo.robotsFollow },
     icons: { icon: branding.faviconUrl, shortcut: branding.faviconUrl },
-    openGraph:{...baseMetadata.openGraph,title:seo.title,description:seo.description,images:seo.ogImage?[seo.ogImage]:undefined},
+    openGraph:{...baseMetadata.openGraph,title:seo.ogTitle||seo.title,description:seo.ogDescription||seo.description,url:seo.canonicalUrl||undefined,images:seo.ogImage?[seo.ogImage]:undefined},
   };
 }
 
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const branding = await getBrandingCms();
+  const [branding, company] = await Promise.all([getBrandingCms(), getCompanyCms()]);
   return (
     <html lang="en">
       <body>
@@ -72,7 +74,7 @@ export default async function RootLayout({
           alternateLogoUrl={branding.alternateLogoUrl}
         />
         <div id="main-content">{children}</div>
-        <SiteFooter logoUrl={branding.footerLogoUrl || branding.logoUrl} />
+        <SiteFooter logoUrl={branding.footerLogoUrl || branding.logoUrl} company={company} />
         <FloatingAssistant />
       </body>
     </html>

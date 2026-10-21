@@ -42,6 +42,13 @@ type Location = {
   verificationStatus: "pending" | "verified";
   displayOrder: number;
 };
+type CompanyProfile = {
+  companyName:string;legalName:string;tagline:string;aboutHeading:string;description:string;companyProfile:string;
+  primaryPhone:string;secondaryPhone:string;whatsapp:string;generalEmail:string;salesEmail:string;purchaseEmail:string;qcEmail:string;factoryEmail:string;
+  registeredOffice:string;factoryAddress:string;officeContact:string;website:string;websiteUrl:string;footerDescription:string;
+  social:{linkedin:string;facebook:string;instagram:string;youtube:string;x:string};
+};
+const companyDefault:CompanyProfile={companyName:"Solarious Energy",legalName:"Mayureshwar Solar Energy Pvt Ltd",tagline:"Clean Energy.. Pure World!",aboutHeading:"Powering India’s Solar Future",description:"Solar module manufacturing and engineering support for commercial, industrial and utility-scale applications.",companyProfile:"Solarious Energy brings manufacturing discipline, product technology and project-focused support together for the evolving solar industry.",primaryPhone:"",secondaryPhone:"",whatsapp:"",generalEmail:"info@solariousenergy.in",salesEmail:"",purchaseEmail:"",qcEmail:"",factoryEmail:"",registeredOffice:"Plot No. T 3/4, MIDC Nardana Phase 2, Bhabalde Nardana, Dhule, Maharashtra – 425404, India",factoryAddress:"Plot No. T 3/4, MIDC Nardana Phase 2, Bhabalde Nardana, Dhule, Maharashtra – 425404, India",officeContact:"",website:"www.solariousenergy.com",websiteUrl:"https://www.solariousenergy.com",footerDescription:"Solar module manufacturing and engineering support for commercial, industrial and utility-scale applications.",social:{linkedin:"",facebook:"",instagram:"",youtube:"",x:""}};
 const aboutDefault: PageSetting = {
   eyebrow: "About Solarious",
   title: "Powering India’s Solar Future",
@@ -96,7 +103,8 @@ const linesToSections = (value: string): Section[] =>
 const sectionsToLines = (items: Section[]) =>
   items.map((item) => `${item.title} | ${item.text}`).join("\n");
 export default function AdminSiteCms() {
-  const [about, setAbout] = useState(aboutDefault),
+  const [company, setCompany] = useState(companyDefault),
+    [about, setAbout] = useState(aboutDefault),
     [manufacturing, setManufacturing] = useState(manufacturingDefault),
     [branding, setBranding] = useState({
       logoUrl: "/solarious-logo.png",
@@ -110,12 +118,13 @@ export default function AdminSiteCms() {
     [loading, setLoading] = useState(true),
     [busy, setBusy] = useState(false),
     [notice, setNotice] = useState(""),
-    [tab, setTab] = useState<"about"|"journey"|"roadmap"|"locations"|"branding"|"seo">("about"),
-    [seo, setSeo] = useState({title:"Solarious Energy",description:"Advanced solar modules and clean-energy solutions for India.",keywords:"solar energy, solar modules, renewable energy",ogImage:"/solarious-logo.png"});
+    [tab, setTab] = useState<"company"|"about"|"journey"|"roadmap"|"locations"|"branding"|"seo">("company"),
+    [seo, setSeo] = useState({title:"Solarious Energy",description:"Advanced solar modules and clean-energy solutions for India.",keywords:"solar energy, solar modules, renewable energy",canonicalUrl:"https://www.solariousenergy.com",ogTitle:"Solarious Energy",ogDescription:"Advanced solar modules and clean-energy solutions for India.",ogImage:"/solarious-logo.png",robotsIndex:true,robotsFollow:true});
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [a, m, b, l, s] = await Promise.all([
+      const [c, a, m, b, l, s] = await Promise.all([
+        adminFetch("/api/admin/settings/companyProfile"),
         adminFetch("/api/admin/settings/aboutPage"),
         adminFetch("/api/admin/settings/manufacturingPage"),
         adminFetch("/api/admin/settings/branding"),
@@ -123,13 +132,15 @@ export default function AdminSiteCms() {
         adminFetch("/api/admin/settings/seoSettings"),
       ]);
       if (!l.ok) throw await apiError(l, "Locations could not be loaded");
-      const [ad, md, bd, ld, sd] = await Promise.all([
+      const [cd, ad, md, bd, ld, sd] = await Promise.all([
+        c.json(),
         a.json(),
         m.json(),
         b.json(),
         l.json(),
         s.json(),
       ]);
+      if(cd.setting?.value)setCompany(current=>({...current,...cd.setting.value,social:{...current.social,...(cd.setting.value.social||{})}}));
       if (ad.setting?.value)
         setAbout((current) => ({ ...current, ...ad.setting.value, sections:(ad.setting.value.sections||[]).map((item:Section,index:number)=>({...item,displayOrder:item.displayOrder??index,published:item.published!==false})) }));
       if (md.setting?.value)
@@ -291,8 +302,35 @@ export default function AdminSiteCms() {
       </div>
       {notice && <div className="admin-notice">{notice}</div>}
       <nav className="cms-tabs" aria-label="Website content sections">
-        {([["about","About Page"],["journey","Company Journey"],["roadmap","Roadmap"],["locations","Business Locations"],["branding","Brand Assets"],["seo","SEO Settings"]] as const).map(([key,label])=><button type="button" className={tab===key?"active":""} aria-current={tab===key?"page":undefined} onClick={()=>setTab(key)} key={key}>{label}</button>)}
+        {([["company","Company & Contact"],["about","About Page"],["journey","Company Journey"],["roadmap","Roadmap"],["locations","Business Locations"],["branding","Brand Assets"],["seo","SEO Settings"]] as const).map(([key,label])=><button type="button" className={tab===key?"active":""} aria-current={tab===key?"page":undefined} onClick={()=>setTab(key)} key={key}>{label}</button>)}
       </nav>
+      <form className="admin-cms-block" hidden={tab!=="company"} onSubmit={event=>{event.preventDefault();void saveSetting("companyProfile",company)}}>
+        <div className="cms-section-head"><div><span>Centralized website identity</span><h3>Company &amp; contact information</h3><p>Changes here are used by the footer, Contact page, About page and quotation contact.</p></div><button type="button" className="button button-ghost" onClick={()=>void load()}><RefreshCw size={16}/>Refresh</button></div>
+        <div className="admin-form-grid">
+          <label>Company name *<input required value={company.companyName} onChange={e=>setCompany({...company,companyName:e.target.value})}/></label>
+          <label>Legal company name *<input required value={company.legalName} onChange={e=>setCompany({...company,legalName:e.target.value})}/></label>
+          <label>Tagline<input value={company.tagline} onChange={e=>setCompany({...company,tagline:e.target.value})}/></label>
+          <label>About Us heading<input value={company.aboutHeading} onChange={e=>setCompany({...company,aboutHeading:e.target.value})}/></label>
+          <label className="full">Company description *<textarea required rows={3} value={company.description} onChange={e=>setCompany({...company,description:e.target.value})}/></label>
+          <label className="full">Company profile<textarea rows={5} value={company.companyProfile} onChange={e=>setCompany({...company,companyProfile:e.target.value})}/></label>
+          <label>Primary mobile<input inputMode="tel" value={company.primaryPhone} onChange={e=>setCompany({...company,primaryPhone:e.target.value})}/></label>
+          <label>Secondary mobile<input inputMode="tel" value={company.secondaryPhone} onChange={e=>setCompany({...company,secondaryPhone:e.target.value})}/></label>
+          <label>WhatsApp number<input inputMode="tel" value={company.whatsapp} onChange={e=>setCompany({...company,whatsapp:e.target.value})}/></label>
+          <label>General email<input type="email" value={company.generalEmail} onChange={e=>setCompany({...company,generalEmail:e.target.value})}/></label>
+          <label>Sales email<input type="email" value={company.salesEmail} onChange={e=>setCompany({...company,salesEmail:e.target.value})}/></label>
+          <label>Purchase email<input type="email" value={company.purchaseEmail} onChange={e=>setCompany({...company,purchaseEmail:e.target.value})}/></label>
+          <label>QC email<input type="email" value={company.qcEmail} onChange={e=>setCompany({...company,qcEmail:e.target.value})}/></label>
+          <label>Factory email<input type="email" value={company.factoryEmail} onChange={e=>setCompany({...company,factoryEmail:e.target.value})}/></label>
+          <label>Website label<input value={company.website} onChange={e=>setCompany({...company,website:e.target.value})}/></label>
+          <label>Website URL<input type="url" value={company.websiteUrl} onChange={e=>setCompany({...company,websiteUrl:e.target.value})}/></label>
+          <label className="full">Registered office<textarea rows={3} value={company.registeredOffice} onChange={e=>setCompany({...company,registeredOffice:e.target.value})}/></label>
+          <label className="full">Factory address<textarea rows={3} value={company.factoryAddress} onChange={e=>setCompany({...company,factoryAddress:e.target.value})}/></label>
+          <label className="full">Office contact information<textarea rows={3} value={company.officeContact} onChange={e=>setCompany({...company,officeContact:e.target.value})}/></label>
+          <label className="full">Footer description<textarea rows={3} value={company.footerDescription} onChange={e=>setCompany({...company,footerDescription:e.target.value})}/></label>
+          {(["linkedin","facebook","instagram","youtube","x"] as const).map(key=><label key={key}>{key[0].toUpperCase()+key.slice(1)} URL<input type="url" value={company.social[key]} onChange={e=>setCompany({...company,social:{...company.social,[key]:e.target.value}})}/></label>)}
+        </div>
+        <button className="button" disabled={busy}>{busy?<Loader2 className="spin" size={16}/>:<Save size={16}/>} {busy?"Saving…":"Save company information"}</button>
+      </form>
       <form
         className="admin-cms-block"
         hidden={tab!=="about"&&tab!=="journey"}
@@ -571,8 +609,8 @@ export default function AdminSiteCms() {
       </form>
       <form className="admin-cms-block" hidden={tab!=="seo"} onSubmit={event=>{event.preventDefault();void saveSetting("seoSettings",seo)}}>
         <div className="cms-section-head"><div><span>Search appearance</span><h3>SEO Settings</h3><p>Set the default search and social sharing content.</p></div></div>
-        <div className="admin-form-grid"><label>Site title<input value={seo.title} onChange={e=>setSeo({...seo,title:e.target.value})}/></label><label>Social image URL<input value={seo.ogImage} onChange={e=>setSeo({...seo,ogImage:e.target.value})}/></label><label className="full">Meta description<textarea rows={4} value={seo.description} onChange={e=>setSeo({...seo,description:e.target.value})}/></label><label className="full">Keywords<input value={seo.keywords} onChange={e=>setSeo({...seo,keywords:e.target.value})}/></label></div>
-        <button className="button" disabled={busy}><Save size={16}/>Save SEO settings</button>
+        <div className="admin-form-grid"><label>Site title<input required maxLength={70} value={seo.title} onChange={e=>setSeo({...seo,title:e.target.value})}/></label><label>Canonical URL<input type="url" value={seo.canonicalUrl} onChange={e=>setSeo({...seo,canonicalUrl:e.target.value})}/></label><label className="full">Meta description<textarea required rows={4} maxLength={180} value={seo.description} onChange={e=>setSeo({...seo,description:e.target.value})}/></label><label className="full">Keywords<input value={seo.keywords} onChange={e=>setSeo({...seo,keywords:e.target.value})}/></label><label>Open Graph title<input value={seo.ogTitle} onChange={e=>setSeo({...seo,ogTitle:e.target.value})}/></label><label>Social image URL<input value={seo.ogImage} onChange={e=>setSeo({...seo,ogImage:e.target.value})}/></label><label className="full">Open Graph description<textarea rows={3} value={seo.ogDescription} onChange={e=>setSeo({...seo,ogDescription:e.target.value})}/></label><label className="cms-check"><input type="checkbox" checked={seo.robotsIndex} onChange={e=>setSeo({...seo,robotsIndex:e.target.checked})}/>Allow search indexing</label><label className="cms-check"><input type="checkbox" checked={seo.robotsFollow} onChange={e=>setSeo({...seo,robotsFollow:e.target.checked})}/>Allow link following</label></div>
+        <button className="button" disabled={busy}>{busy?<Loader2 className="spin" size={16}/>:<Save size={16}/>} {busy?"Saving…":"Save SEO settings"}</button>
       </form>
       {editingLocation && (
         <div className="admin-modal-backdrop">

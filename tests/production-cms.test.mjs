@@ -74,3 +74,27 @@ test("festival studio uses real validated image generation and supported aspect 
   assert.doesNotMatch(server, /deterministic-fallback/);
   assert.doesNotMatch(server, /FESTIVAL_TEMPLATE_FALLBACK/);
 });
+
+test("admin mutations enforce same-origin CSRF before the trusted backend hop", async () => {
+  const proxy = await read("app/api/[...path]/route.ts");
+  assert.match(proxy, /isAdminMutation && origin && origin !== requestUrl\.origin/);
+  assert.match(proxy, /Cross-origin admin request denied/);
+  assert.match(proxy, /headers\.delete\("origin"\)/);
+  assert.match(proxy, /revalidatePath\("\/", "layout"\)/);
+});
+
+test("company and SEO settings are centralized and consumed by public pages", async () => {
+  const [cms, admin, layout, contact, footer] = await Promise.all([
+    read("lib/site-cms.ts"),
+    read("components/admin-site-cms.tsx"),
+    read("app/layout.tsx"),
+    read("app/contact/page.tsx"),
+    read("components/site-footer.tsx"),
+  ]);
+  assert.match(cms, /getCompanyCms/);
+  assert.match(admin, /companyProfile/);
+  assert.match(admin, /canonicalUrl/);
+  assert.match(layout, /robotsIndex/);
+  assert.match(contact, /company\.salesEmail/);
+  assert.match(footer, /company\.footerDescription/);
+});

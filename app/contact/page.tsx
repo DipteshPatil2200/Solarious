@@ -2,15 +2,14 @@ import type { Metadata } from "next";
 import ContactForm from "@/components/contact-form";
 import LocationMap from "@/components/location-map";
 import PageShell from "@/components/page-shell";
-import { company } from "@/data/site";
-import { getLocations } from "@/lib/site-cms";
+import { getCompanyCms, getLocations } from "@/lib/site-cms";
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
     "Contact Solarious Energy for module specifications, quotations and project support.",
 };
 export default async function Page() {
-  const locations = await getLocations();
+  const [locations, company] = await Promise.all([getLocations(), getCompanyCms()]);
   return (
     <PageShell
       eyebrow="Get in touch"
@@ -26,7 +25,7 @@ export default async function Page() {
             <ContactForm />
             <p className="contact-email-note">
               Prefer email?{" "}
-              <a href={`mailto:${company.email}`}>{company.email}</a>
+              <a href={`mailto:${company.generalEmail}`}>{company.generalEmail}</a>
             </p>
           </div>
           <aside>
@@ -38,18 +37,22 @@ export default async function Page() {
               </div>
               <div>
                 <dt>Head Office</dt>
-                <dd>{company.headOffice}</dd>
+                <dd>{company.registeredOffice}</dd>
               </div>
               <div>
                 <dt>Manufacturing Unit</dt>
-                <dd>{company.manufacturingUnit}</dd>
+                <dd>{company.factoryAddress}</dd>
               </div>
               <div>
                 <dt>Email</dt>
                 <dd>
-                  <a href={`mailto:${company.email}`}>{company.email}</a>
+                  <a href={`mailto:${company.generalEmail}`}>{company.generalEmail}</a>
                 </dd>
               </div>
+              {company.salesEmail && <div><dt>Sales</dt><dd><a href={`mailto:${company.salesEmail}`}>{company.salesEmail}</a></dd></div>}
+              {company.purchaseEmail && <div><dt>Purchase</dt><dd><a href={`mailto:${company.purchaseEmail}`}>{company.purchaseEmail}</a></dd></div>}
+              {company.qcEmail && <div><dt>Quality</dt><dd><a href={`mailto:${company.qcEmail}`}>{company.qcEmail}</a></dd></div>}
+              {company.factoryEmail && <div><dt>Factory</dt><dd><a href={`mailto:${company.factoryEmail}`}>{company.factoryEmail}</a></dd></div>}
               <div>
                 <dt>Website</dt>
                 <dd>
@@ -60,14 +63,12 @@ export default async function Page() {
               </div>
             </dl>
             <div className="contact-actions">
-              <a className="button" href={`mailto:${company.email}`}>
+              <a className="button" href={`mailto:${company.generalEmail}`}>
                 Email Solarious
               </a>
             </div>
-            <p>
-              No company phone number is published because it has not been
-              verified in the supplied company document.
-            </p>
+            {company.primaryPhone && <p>Primary contact: <a href={`tel:${company.primaryPhone}`}>{company.primaryPhone}</a>{company.secondaryPhone ? <> · <a href={`tel:${company.secondaryPhone}`}>{company.secondaryPhone}</a></> : null}</p>}
+            {company.officeContact && <p>{company.officeContact}</p>}
           </aside>
         </div>
         {locations.map((location) => (

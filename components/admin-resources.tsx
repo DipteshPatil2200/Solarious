@@ -1,5 +1,6 @@
 "use client";
 import { adminFetch } from "@/lib/admin-fetch";
+import { apiError } from "@/lib/api-error";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Download,
@@ -36,7 +37,11 @@ type Upload = {
   fileName: string;
   fileType: string;
   fileSize: number;
+  fileUrl: string;
+  storageId: string;
 };
+const documentTypes:Record<string,string>={pdf:"application/pdf",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xls:"application/vnd.ms-excel",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
+const documentType=(file:File)=>file.type||documentTypes[file.name.split(".").pop()?.toLowerCase()||""]||"";
 function streamUpload(
   file: File,
   onProgress: (value: number) => void,
@@ -51,7 +56,7 @@ function streamUpload(
     xhr.open("POST", "/api/admin/resources/upload");
     xhr.withCredentials = true;
     xhr.timeout = 120000;
-    xhr.setRequestHeader("Content-Type", file.type);
+    xhr.setRequestHeader("Content-Type", documentType(file));
     xhr.setRequestHeader("X-File-Name", encodeURIComponent(file.name));
     xhr.upload.onprogress = (e) => {
       if (e.lengthComputable)
@@ -61,7 +66,7 @@ function streamUpload(
       try {
         const data = JSON.parse(xhr.responseText);
         if (xhr.status >= 200 && xhr.status < 300) resolve(data);
-        else reject(new Error(data.error ?? "Upload failed."));
+        else reject(new Error(xhr.status === 401 ? "Your admin session expired. Sign in again before uploading." : xhr.status === 403 ? data.error ?? "The upload was rejected by the production origin policy." : data.error ?? "Upload failed."));
       } catch {
         reject(new Error("Invalid upload response."));
       }
@@ -85,11 +90,11 @@ export default function AdminResources() {
   const load = useCallback(
     () =>
       adminFetch("/api/admin/resources")
-        .then((r) => r.json())
+        .then(async (r) => { if(!r.ok) throw await apiError(r,"Resources could not be loaded"); return r.json(); })
         .then((d) => {
           setItems(d.resources ?? []);
           setCategories(d.categories ?? []);
-        }),
+        }).catch(error=>setNotice(error instanceof Error?error.message:"Resources could not be loaded.")),
     [],
   );
   useEffect(() => {
@@ -110,6 +115,7 @@ export default function AdminResources() {
     if (busy) return;
     const form = e.currentTarget,
       file = new FormData(form).get("file") as File;
+    if(file?.size&&!Object.values(documentTypes).includes(documentType(file))){setNotice("Choose a PDF, PNG, JPEG, WebP, DOC, DOCX, XLS or XLSX document.");return}
     if (file?.size > 20 * 1024 * 1024) {
       setNotice("File exceeds the 20 MB limit.");
       return;
@@ -183,6 +189,7 @@ export default function AdminResources() {
           i.id === x.id ? { ...i, published: x.published ? 0 : 1 } : i,
         ),
       );
+    else setNotice((await r.json().catch(()=>({}))).error??"Publishing status could not be changed.");
   }
   async function remove(x: Resource) {
     if (!confirm(`Delete ${x.title} and its stored file?`)) return;

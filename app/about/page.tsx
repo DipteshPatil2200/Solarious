@@ -4,19 +4,19 @@ import { CheckCircle2 } from "lucide-react";
 import CertificatesSection from "@/components/certificates-section";
 import PageShell from "@/components/page-shell";
 import TeamSection from "@/components/team-section";
-import { getAboutCms } from "@/lib/site-cms";
+import { getAboutCms, getCompanyCms } from "@/lib/site-cms";
 export const metadata: Metadata = {
   title: "About Us",
   description:
     "Learn about Solarious Energy, its mission, manufacturing focus and company values.",
 };
 export default async function Page() {
-  const content = await getAboutCms();
+  const [content, company] = await Promise.all([getAboutCms(), getCompanyCms()]);
   return (
     <PageShell
       eyebrow={content.eyebrow}
-      title={content.title}
-      intro={content.intro}
+      title={company.aboutHeading || content.title}
+      intro={company.companyProfile || content.intro}
       image={content.heroImage}
     >
       <section className="content-section">

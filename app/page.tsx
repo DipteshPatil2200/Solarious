@@ -6,7 +6,8 @@ import AiSolarSection from "@/components/ai-solar-section";
 import HeroSlider from "@/components/hero-slider";
 import PremiumProductShowcase from "@/components/premium-product-showcase";
 import TechnologyTabs from "@/components/technology-tabs";
-import { company, resourceCategories } from "@/data/site";
+import { resourceCategories } from "@/data/site";
+import { getCompanyCms } from "@/lib/site-cms";
 import { getEvents } from "@/lib/events";
 import { getGallery } from "@/lib/gallery";
 import { getProductionHeroBanners } from "@/lib/hero-banners";
@@ -29,7 +30,7 @@ const fallbackGallery = [
 const formatDate = (value: string) => new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(value));
 
 export default async function Home() {
-  const [banners, products, gallery, events] = await Promise.all([getProductionHeroBanners(), getSiteProducts(), getGallery(), getEvents()]);
+  const [banners, products, gallery, events, company] = await Promise.all([getProductionHeroBanners(), getSiteProducts(), getGallery(), getEvents(), getCompanyCms()]);
   const galleryPreview = gallery.length ? gallery.slice(0, 5) : fallbackGallery;
   const eventPreview = events.slice(0, 3);
 
@@ -38,7 +39,7 @@ export default async function Home() {
 
     <section className="premium-intro premium-section" aria-labelledby="brand-introduction">
       <div className="premium-section-number">01</div>
-      <div><p className="premium-kicker">Solarious Energy</p><h2 id="brand-introduction">Engineering sunlight into <em>lasting value.</em></h2></div>
+      <div><p className="premium-kicker">{company.companyName}</p><h2 id="brand-introduction">Engineering sunlight into <em>lasting value.</em></h2></div>
       <div className="premium-intro-copy"><p>{company.description}</p><p>We bring product technology, manufacturing discipline and responsive technical support together for commercial, industrial and utility-scale solar applications.</p><Link className="premium-text-link" href="/about">Discover Solarious <ArrowRight size={16} /></Link></div>
     </section>
 
