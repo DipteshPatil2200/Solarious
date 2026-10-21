@@ -59,14 +59,14 @@ test("resource preview preserves MIME type and About owns certificate presentati
   assert.match(resources, /item\.category\s*!==\s*"Certificates"/);
 });
 test("festival studio has deterministic fallback and supported aspect ratios", async () => {
-  const [server, studio] = await Promise.all([
-    read("backend/server.mjs"),
+  const [provider, studio] = await Promise.all([
+    read("backend/services/image-generation.mjs"),
     read("components/admin-ai-creatives.tsx"),
   ]);
   for (const ratio of ["1:1", "4:5", "9:16", "16:9"]) {
-    assert.ok(server.includes(`"${ratio}"`));
+    assert.ok(provider.includes(`"${ratio}"`));
     assert.ok(studio.includes(`value="${ratio}"`));
   }
-  assert.match(server, /model="deterministic-fallback"/);
-  assert.match(server, /renderFestivalCreative/);
+  assert.match(provider, /model: "deterministic-fallback"/);
+  assert.match(provider, /FESTIVAL_TEMPLATE_FALLBACK === "true"/);
 });

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import sharp from "sharp";
 
 const provider = "stability";
 const apiBase = "https://api.stability.ai/v2beta/stable-image/generate";
@@ -37,6 +38,12 @@ export const imageConfiguration = () => {
 };
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const retryDelay = (attempt, retryAfter) => Number.isFinite(Number(retryAfter)) ? Math.min(Number(retryAfter) * 1000, 10_000) : Math.min(800 * 2 ** (attempt - 1), 5_000);
+const fallbackSizes = { "1:1": [1080, 1080], "4:5": [1080, 1350], "9:16": [1080, 1920], "16:9": [1920, 1080] };
+const deterministicFallback = async aspectRatio => {
+  const [width, height] = fallbackSizes[aspectRatio] || fallbackSizes["1:1"];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#061d33"/><stop offset="1" stop-color="#e97800"/></linearGradient></defs><rect width="100%" height="100%" fill="url(#g)"/><circle cx="${Math.round(width*.8)}" cy="${Math.round(height*.18)}" r="${Math.round(Math.min(width,height)*.1)}" fill="#ffd77a"/><path d="M0 ${Math.round(height*.72)} L${width} ${Math.round(height*.52)} V${height} H0Z" fill="#063f4b"/><path d="M${Math.round(width*.1)} ${Math.round(height*.72)} L${Math.round(width*.7)} ${Math.round(height*.58)} L${Math.round(width*.84)} ${Math.round(height*.72)} L${Math.round(width*.24)} ${Math.round(height*.87)}Z" fill="#102d4a" stroke="#7cc6dd" stroke-width="${Math.max(3,Math.round(width*.004))}"/></svg>`;
+  return sharp(Buffer.from(svg)).jpeg({ quality: 92, mozjpeg: true }).toBuffer();
+};
 
 export async function generateMarketingImage({ prompt, aspectRatio = "1:1" }) {
   const config = imageConfiguration();
@@ -70,7 +77,11 @@ export async function generateMarketingImage({ prompt, aspectRatio = "1:1" }) {
       if (!error?.stage && error?.name === "AbortError") error = classifyProviderFailure(504, { model: config.model, requestId, durationMs: Date.now() - started, attempt });
       else if (!error?.stage) error = failure("The image provider is temporarily unavailable.", "PROVIDER_UNAVAILABLE", 503, { provider, model: config.model, requestId, retryable: true, durationMs: Date.now() - started, attempt });
       console.error("[image:provider:error]", { provider, model: config.model, status: error.status, code: error.code, requestId, attempt });
-      if (!error.retryable || attempt === 3) throw error;
+      if (!error.retryable || attempt === 3) {
+        const fallbackAllowed = process.env.FESTIVAL_TEMPLATE_FALLBACK === "true" && error?.retryable === true;
+        if (!fallbackAllowed) throw error;
+        return { buffer: await deterministicFallback(aspectRatio), provider: "deterministic-template", model: "deterministic-fallback", mimeType: "image/jpeg", requestId };
+      }
       await wait(retryDelay(attempt, error.retryAfter));
     } finally { clearTimeout(timeout); }
   }
