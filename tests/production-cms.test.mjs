@@ -59,14 +59,14 @@ test("resource preview preserves MIME type and About owns document presentation"
   assert.match(about, /CompanyDocumentsSection/);
   assert.match(documents, /Company Documents &amp; Certifications/);
 });
-test("festival studio uses real validated image generation and supported aspect ratios", async () => {
+test("festival studio uses validated image generation and supported aspect ratios", async () => {
   const [server, studio, provider] = await Promise.all([
     read("backend/server.mjs"),
     read("components/admin-ai-creatives.tsx"),
     read("backend/services/image-generation.mjs"),
   ]);
   for (const ratio of ["1:1", "4:5", "9:16", "16:9"]) {
-    assert.ok(server.includes(`"${ratio}"`));
+    assert.ok(provider.includes(`"${ratio}"`));
     assert.ok(studio.includes(`value="${ratio}"`));
   }
   assert.match(server, /renderFestivalCreative/);
@@ -74,6 +74,8 @@ test("festival studio uses real validated image generation and supported aspect 
   assert.match(provider, /api\.stability\.ai\/v2beta\/stable-image\/generate/);
   assert.doesNotMatch(server, /deterministic-fallback/);
   assert.doesNotMatch(server, /FESTIVAL_TEMPLATE_FALLBACK/);
+  assert.match(provider, /model: "deterministic-fallback"/);
+  assert.match(provider, /FESTIVAL_TEMPLATE_FALLBACK === "true"/);
 });
 
 test("admin mutations enforce same-origin CSRF before the trusted backend hop", async () => {

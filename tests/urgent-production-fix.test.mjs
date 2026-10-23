@@ -26,6 +26,8 @@ test("festival billing failures cannot silently fall back to a template", async 
   assert.doesNotMatch(server, /deterministic-fallback/);
   assert.match(provider, /PROVIDER_PAYMENT_REQUIRED/);
   assert.match(provider, /retryable: false/);
+  assert.match(provider, /FESTIVAL_TEMPLATE_FALLBACK === "true"/);
+  assert.match(provider, /if \(!fallbackAllowed\) throw error/);
 });
 
 test("transparent home header removes the logo card without global image hacks", async () => {
