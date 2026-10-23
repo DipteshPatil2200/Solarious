@@ -22,9 +22,9 @@ const groups = [
     ],
   },
   {
-    title: "Resources",
+    title: "Explore",
     links: [
-      ["Downloads", "/resources"],
+      ["Company Documents", "/about#company-documents"],
       ["Solar Calculator", "/solar-calculator"],
       ["Compare Modules", "/compare"],
       ["Quality", "/quality"],

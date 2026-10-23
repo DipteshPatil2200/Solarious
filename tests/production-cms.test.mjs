@@ -47,16 +47,17 @@ test("product fallbacks receive the same datasheet enrichment as database produc
   assert.match(loader, /series: monoPercSeries/);
   assert.match(loader, /datasheets: monoPercDatasheets/);
 });
-test("resource preview preserves MIME type and About owns certificate presentation", async () => {
-  const [server, about, resources] = await Promise.all([
+test("resource preview preserves MIME type and About owns document presentation", async () => {
+  const [server, about, documents] = await Promise.all([
     read("backend/server.mjs"),
     read("app/about/page.tsx"),
-    read("components/resource-browser.tsx"),
+    read("components/company-documents-section.tsx"),
   ]);
   assert.match(server, /Content-Disposition/);
   assert.match(server, /X-Content-Type-Options/);
-  assert.match(about, /CertificatesSection/);
-  assert.match(resources, /item\.category\s*!==\s*"Certificates"/);
+  assert.match(server, /streamResourceFile/);
+  assert.match(about, /CompanyDocumentsSection/);
+  assert.match(documents, /Company Documents &amp; Certifications/);
 });
 test("festival studio uses real validated image generation and supported aspect ratios", async () => {
   const [server, studio, provider] = await Promise.all([

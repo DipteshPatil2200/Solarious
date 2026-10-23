@@ -1,9 +1,13 @@
 "use client";
 import { adminFetch } from "@/lib/admin-fetch";
 import { apiError } from "@/lib/api-error";
+import DocumentPreviewModal, {
+  type DocumentPreview,
+} from "@/components/document-preview-modal";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Download,
+  Eye,
   FilePlus2,
   Loader2,
   Pencil,
@@ -21,6 +25,7 @@ type Resource = {
   issuingOrganization?: string;
   certificateNumber?: string;
   previewImageUrl?: string;
+  previewImageStorageId?: string;
   logoUrl?: string;
   issueDate?: string;
   expiryDate?: string;
@@ -40,6 +45,7 @@ type Upload = {
   fileUrl: string;
   storageId: string;
 };
+type PreviewUpload = { url: string; storageId: string };
 const documentTypes:Record<string,string>={pdf:"application/pdf",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",webp:"image/webp",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document",xls:"application/vnd.ms-excel",xlsx:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
 const documentType=(file:File)=>file.type||documentTypes[file.name.split(".").pop()?.toLowerCase()||""]||"";
 function streamUpload(
@@ -77,6 +83,21 @@ function streamUpload(
     xhr.send(file);
   });
 }
+async function uploadThumbnail(file: File): Promise<PreviewUpload> {
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type))
+    throw new Error("Thumbnail must be a JPG, PNG or WebP image.");
+  if (file.size > 5 * 1024 * 1024)
+    throw new Error("Thumbnail must be 5 MB or smaller.");
+  const formData = new FormData();
+  formData.append("file", file, file.name);
+  const response = await adminFetch("/api/admin/site-content/upload", {
+    method: "POST",
+    body: formData,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || "Thumbnail upload failed.");
+  return { url: data.url, storageId: data.storageId };
+}
 export default function AdminResources() {
   const [items, setItems] = useState<Resource[]>([]),
     [categories, setCategories] = useState<string[]>([]),
@@ -85,6 +106,9 @@ export default function AdminResources() {
     [busy, setBusy] = useState(false),
     [progress, setProgress] = useState(0),
     [notice, setNotice] = useState(""),
+    [preview, setPreview] = useState<DocumentPreview | null>(null),
+    [localPreviewUrl, setLocalPreviewUrl] = useState(""),
+    [localPreviewFile, setLocalPreviewFile] = useState<File | null>(null),
     [retryForm, setRetryForm] = useState<HTMLFormElement | null>(null);
   const request = useRef<XMLHttpRequest | null>(null);
   const load = useCallback(
@@ -101,6 +125,26 @@ export default function AdminResources() {
     void load();
     return () => request.current?.abort();
   }, [load]);
+  useEffect(() => () => {
+    if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
+  }, [localPreviewUrl]);
+  const closePreview = useCallback(() => setPreview(null), []);
+  const closeEditor = () => {
+    setEditing(undefined);
+    setLocalPreviewFile(null);
+    setLocalPreviewUrl("");
+  };
+  const chooseDocument = (file?: File) => {
+    setLocalPreviewFile(file?.size ? file : null);
+    setLocalPreviewUrl((current) => {
+      if (current) URL.revokeObjectURL(current);
+      return file?.size ? URL.createObjectURL(file) : "";
+    });
+  };
+  const previewResource = (item: Resource) => {
+    const previewUrl = `/api/admin/resources/${item.id}/file`;
+    setPreview({title:item.title,fileName:item.file_name,fileType:item.file_type,previewUrl,downloadUrl:`${previewUrl}?download=1`});
+  };
   const filtered = useMemo(
     () =>
       items.filter((x) =>
@@ -114,26 +158,30 @@ export default function AdminResources() {
     e.preventDefault();
     if (busy) return;
     const form = e.currentTarget,
-      file = new FormData(form).get("file") as File;
+      data = new FormData(form),
+      file = data.get("file") as File,
+      thumbnail = data.get("previewImage") as File;
     if(file?.size&&!Object.values(documentTypes).includes(documentType(file))){setNotice("Choose a PDF, PNG, JPEG, WebP, DOC, DOCX, XLS or XLSX document.");return}
     if (file?.size > 20 * 1024 * 1024) {
       setNotice("File exceeds the 20 MB limit.");
       return;
     }
+    if(thumbnail?.size&&!['image/jpeg','image/png','image/webp'].includes(thumbnail.type)){setNotice("Thumbnail must be a JPG, PNG or WebP image.");return}
+    if(thumbnail?.size>5*1024*1024){setNotice("Thumbnail must be 5 MB or smaller.");return}
     setBusy(true);
     setProgress(0);
     setNotice("");
     setRetryForm(form);
     let uploaded: Upload | undefined;
     try {
-      let timing;
+      let timing, previewUpload: PreviewUpload | undefined;
       if (file?.size) {
         const result = await streamUpload(file, setProgress, request);
         uploaded = result.upload;
         timing = result.timing;
       } else if (!editing) throw new Error("Choose a document to upload.");
-      const data = new FormData(form),
-        payload = {
+      if (thumbnail?.size) previewUpload = await uploadThumbnail(thumbnail);
+      const payload = {
           id: editing?.id,
           title: data.get("title"),
           description: data.get("description"),
@@ -149,6 +197,7 @@ export default function AdminResources() {
           displayOrder: Number(data.get("displayOrder")),
           published: data.get("published") === "true",
           upload: uploaded,
+          previewUpload,
         };
       const r = await adminFetch("/api/admin/resources", {
         method: "POST",
@@ -166,7 +215,7 @@ export default function AdminResources() {
       setNotice(
         `Resource saved successfully.${timing ? ` Upload: ${timing.totalMs} ms (storage ${timing.storageMs} ms).` : ""}`,
       );
-      setEditing(undefined);
+      closeEditor();
       setRetryForm(null);
     } catch (error) {
       setNotice(
@@ -183,13 +232,11 @@ export default function AdminResources() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: x.id, published: !x.published }),
     });
-    if (r.ok)
-      setItems((v) =>
-        v.map((i) =>
-          i.id === x.id ? { ...i, published: x.published ? 0 : 1 } : i,
-        ),
-      );
-    else setNotice((await r.json().catch(()=>({}))).error??"Publishing status could not be changed.");
+    const result = await r.json().catch(() => ({}));
+    if (r.ok) {
+      setItems((v) => v.map((i) => i.id === x.id ? result.resource || { ...i, published: x.published ? 0 : 1 } : i));
+      setNotice(x.published ? "Document unpublished." : "Document published on the About Us page.");
+    } else setNotice(result.error ?? "Publishing status could not be changed.");
   }
   async function remove(x: Resource) {
     if (!confirm(`Delete ${x.title} and its stored file?`)) return;
@@ -199,17 +246,17 @@ export default function AdminResources() {
     if (r.ok) {
       setItems((v) => v.filter((i) => i.id !== x.id));
       setNotice("Resource deleted.");
-    }
+    } else setNotice((await r.json().catch(() => ({}))).error ?? "Document could not be deleted.");
   }
   return (
     <section className="admin-panel">
       <div className="admin-panel-head">
         <div>
-          <h2>Resources & Downloads</h2>
-          <p>Upload, publish and manage customer-facing documents.</p>
+          <h2>Documents &amp; Certifications</h2>
+          <p>Upload, preview, order and publish documents on the About Us page.</p>
         </div>
-        <button className="button" onClick={() => setEditing(null)}>
-          <FilePlus2 size={16} /> Add resource
+        <button className="button" onClick={() => { chooseDocument(undefined); setEditing(null); }}>
+          <FilePlus2 size={16} /> Add document
         </button>
       </div>
       {notice && (
@@ -257,13 +304,9 @@ export default function AdminResources() {
                   <small>{x.product}</small>
                 </td>
                 <td>
-                  <a
-                    href={`/api/resources/${x.id}/file`}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
+                  <button className="admin-file-preview" type="button" onClick={() => previewResource(x)}>
                     {x.file_name}
-                  </a>
+                  </button>
                   <small>{(x.file_size / 1024 / 1024).toFixed(1)} MB</small>
                 </td>
                 <td>{x.display_order}</td>
@@ -279,14 +322,14 @@ export default function AdminResources() {
                   <div className="table-actions">
                     <button
                       className="icon-button"
-                      onClick={() => setEditing(x)}
+                      onClick={() => { chooseDocument(undefined); setEditing(x); }}
                       aria-label="Edit"
                     >
                       <Pencil size={15} />
                     </button>
                     <a
                       className="icon-button"
-                      href={`/api/resources/${x.id}/file?download=1`}
+                      href={`/api/admin/resources/${x.id}/file?download=1`}
                       aria-label="Download"
                     >
                       <Download size={15} />
@@ -311,7 +354,7 @@ export default function AdminResources() {
       {editing !== undefined && (
         <div
           className="admin-modal-backdrop"
-          onMouseDown={() => !busy && setEditing(undefined)}
+          onMouseDown={() => !busy && closeEditor()}
         >
           <div
             className="admin-modal"
@@ -322,7 +365,7 @@ export default function AdminResources() {
             <button
               className="modal-close"
               disabled={busy}
-              onClick={() => setEditing(undefined)}
+              onClick={closeEditor}
               aria-label="Close"
             >
               <X />
@@ -369,6 +412,7 @@ export default function AdminResources() {
                 <label>Expiry date<input name="expiryDate" type="date" defaultValue={editing?.expiryDate?.slice(0,10)} /></label>
                 <label>Certificate logo URL<input name="logoUrl" type="url" defaultValue={editing?.logoUrl} /></label>
                 <label>Preview image URL<input name="previewImageUrl" type="url" defaultValue={editing?.previewImageUrl} /></label>
+                <label>Upload thumbnail<input name="previewImage" type="file" accept="image/jpeg,image/png,image/webp" /></label>
                 <label>Verification URL<input name="verificationUrl" type="url" defaultValue={editing?.verificationUrl} /></label>
               </div>
               <label>
@@ -386,8 +430,27 @@ export default function AdminResources() {
                   type="file"
                   required={!editing}
                   accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx"
+                  onChange={(event) => chooseDocument(event.currentTarget.files?.[0])}
                 />
               </label>
+              {(localPreviewFile || editing) && (
+                <button
+                  type="button"
+                  className="button button-ghost admin-document-preview"
+                  onClick={() => {
+                    if (localPreviewFile && localPreviewUrl) {
+                      setPreview({
+                        title: localPreviewFile.name,
+                        fileName: localPreviewFile.name,
+                        fileType: documentType(localPreviewFile),
+                        previewUrl: localPreviewUrl,
+                      });
+                    } else if (editing) previewResource(editing);
+                  }}
+                >
+                  <Eye size={16} /> Preview document before publishing
+                </button>
+              )}
               <label className="checkbox-label">
                 <input
                   name="published"
@@ -429,7 +492,7 @@ export default function AdminResources() {
                   type="button"
                   className="button button-ghost"
                   disabled={busy}
-                  onClick={() => setEditing(undefined)}
+                  onClick={closeEditor}
                 >
                   Cancel
                 </button>
@@ -442,6 +505,7 @@ export default function AdminResources() {
           </div>
         </div>
       )}
+      <DocumentPreviewModal document={preview} onClose={closePreview} />
     </section>
   );
 }

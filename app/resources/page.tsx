@@ -1,1 +1,5 @@
-import type { Metadata } from "next";import PageShell from "@/components/page-shell";import ResourceBrowser from "@/components/resource-browser";export const metadata:Metadata={title:"Resources & Downloads",description:"Find Solarious product datasheets, technical specifications, brochures and approved documents."};export default function Page(){return <PageShell eyebrow="Knowledge centre" title="Resources & Downloads" intro="Search approved technical, corporate and warranty documents. Unverified or unavailable files are never presented as downloads." image="/manufacturing-line.webp"><section className="content-section"><ResourceBrowser/></section></PageShell>}
+import { permanentRedirect } from "next/navigation";
+
+export default function Page() {
+  permanentRedirect("/about#company-documents");
+}

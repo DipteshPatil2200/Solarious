@@ -74,7 +74,12 @@ export function createSignedRawDownload({ publicId, attachment = false, expiresA
   if (!config.cloud_name || !config.api_key || !config.api_secret) throw credentialError("Cloud storage is not configured.");
   if (!String(publicId || "").startsWith("solarious/")) throw credentialError("The stored document identifier is invalid.", "CLOUDINARY_RESOURCE_INVALID");
 
-  return client.utils.private_download_url(String(publicId), "", {
+  const extension = String(publicId).split("/").at(-1)?.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+  if (!extension) throw credentialError("The stored document format is invalid.", "CLOUDINARY_RESOURCE_INVALID");
+
+  // Cloudinary requires a format when signing the download API request, even
+  // though raw public IDs already contain their file extension.
+  return client.utils.private_download_url(String(publicId), extension, {
     resource_type: "raw",
     type: "upload",
     attachment,

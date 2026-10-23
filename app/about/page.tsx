@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 /* eslint-disable @next/next/no-img-element */
 import { CheckCircle2 } from "lucide-react";
-import CertificatesSection from "@/components/certificates-section";
+import CompanyDocumentsSection from "@/components/company-documents-section";
 import PageShell from "@/components/page-shell";
 import TeamSection from "@/components/team-section";
 import { getAboutCms, getCompanyCms } from "@/lib/site-cms";
@@ -50,7 +50,7 @@ export default async function Page() {
           </section>
         )}
         <TeamSection />
-        <CertificatesSection />
+        <CompanyDocumentsSection />
       </section>
     </PageShell>
   );

@@ -1,12 +1,11 @@
 import Link from "next/link";
 import LeadFormModal from "@/components/lead-form-modal";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, CalendarDays, Download, Factory, FileText, Leaf, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CalendarDays, Factory, Leaf, ShieldCheck, Sparkles } from "lucide-react";
 import AiSolarSection from "@/components/ai-solar-section";
 import HeroSlider from "@/components/hero-slider";
 import PremiumProductShowcase from "@/components/premium-product-showcase";
 import TechnologyTabs from "@/components/technology-tabs";
-import { resourceCategories } from "@/data/site";
 import { getCompanyCms } from "@/lib/site-cms";
 import { getEvents } from "@/lib/events";
 import { getGallery } from "@/lib/gallery";
@@ -73,12 +72,6 @@ export default async function Home() {
     <section className="premium-events premium-section" aria-labelledby="events-heading">
       <div className="premium-heading-row"><div><p className="premium-kicker">Events &amp; activities</p><h2 id="events-heading">Meet. Learn. <em>Move solar forward.</em></h2></div><Link className="premium-text-link" href="/events">All events <ArrowRight size={16} /></Link></div>
       {eventPreview.length ? <div className="premium-event-track">{eventPreview.map((event) => <article key={event.id}><Image src={event.cover_url || "/utility-solar.webp"} alt="" width={900} height={560} sizes="(max-width: 700px) 84vw, 33vw" /><div><span><CalendarDays size={14} /> {formatDate(event.event_date)}</span><h3>{event.title}</h3><p>{event.short_description}</p><Link href={`/events/${event.slug}`}>View event <ArrowUpRight size={15} /></Link></div></article>)}</div> : <div className="premium-empty-state"><CalendarDays size={28} /><h3>New events are on the way.</h3><p>Published exhibitions, technical sessions and activities will appear here.</p><Link href="/events">Explore events</Link></div>}
-    </section>
-
-    <section className="premium-resources premium-section" aria-labelledby="resources-heading">
-      <div className="premium-heading-row"><div><p className="premium-kicker">Resources &amp; downloads</p><h2 id="resources-heading">Approved information.<br /><em>Ready when you are.</em></h2></div><p>Find published datasheets, technical specifications, brochures and company documents in one searchable library.</p></div>
-      <div className="premium-resource-grid">{resourceCategories.slice(0, 4).map((category, index) => <Link href="/resources" key={category}><span>{String(index + 1).padStart(2, "0")}</span><FileText size={22} /><strong>{category}</strong><ArrowUpRight size={17} /></Link>)}</div>
-      <Link className="premium-text-link" href="/resources"><Download size={16} /> Open download centre</Link>
     </section>
 
     <section className="premium-contact-cta" aria-labelledby="contact-cta-heading">

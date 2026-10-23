@@ -35,8 +35,18 @@ test("creates a short-lived signed raw download for protected documents", () => 
   });
   assert.match(url, /^https:\/\/api\.cloudinary\.com\/v1_1\/demo\/raw\/download/);
   assert.match(url, /public_id=solarious%2Fresources%2Fbis-certificate\.pdf/);
+  assert.match(url, /format=pdf/);
   assert.match(url, /expires_at=1791890428/);
   assert.doesNotMatch(url, /secret/);
+});
+
+test("rejects a raw download without a file format", () => {
+  const config = { cloud_name: "demo", api_key: "12345", api_secret: "secret" };
+  const client = { config: () => config, utils: sdk.utils };
+  assert.throws(
+    () => createSignedRawDownload({ publicId: "solarious/resources/document", client }),
+    error => error.code === "CLOUDINARY_RESOURCE_INVALID",
+  );
 });
 
 test("rejects a raw download outside the managed Solarious folder", () => {

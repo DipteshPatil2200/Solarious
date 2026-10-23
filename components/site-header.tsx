@@ -20,7 +20,6 @@ const primary = [
   ["Manufacturing", "/manufacturing"],
   ["Projects", "/projects"],
   ["Gallery", "/gallery"],
-  ["Resources", "/resources"],
   ["Contact", "/contact"],
 ] as const;
 const productLinks = [
@@ -195,7 +194,6 @@ export default function SiteHeader({
           setOpen={(value) => setMenu(value ? "solutions" : null)}
           active={solutionLinks.some(([, href]) => current(pathname, href))}
         />
-        <NavLink href="/resources" label="Resources" pathname={pathname} />
         <NavLink href="/contact" label="Contact" pathname={pathname} />
       </nav>
       <LeadFormModal label="Get a quote" className="button button-small" />
