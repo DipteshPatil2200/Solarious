@@ -30,6 +30,16 @@ test("festival billing failures cannot silently fall back to a template", async 
   assert.match(provider, /if \(!fallbackAllowed\) throw error/);
 });
 
+test("festival generation polling tolerates the initial request race", async () => {
+  const [server, studio] = await Promise.all([
+    read("backend/server.mjs"),
+    read("components/admin-ai-creatives.tsx"),
+  ]);
+  assert.match(server, /creative-generations\/:key.*?status\(202\).*?status:"generating"/);
+  assert.match(studio, /catch\{\/\* Keep generation alive/);
+  assert.match(studio, /window\.clearTimeout\(timer\)/);
+});
+
 test("transparent home header removes the logo card without global image hacks", async () => {
   const header = await read("app/content-image-sizing.css");
   assert.match(
