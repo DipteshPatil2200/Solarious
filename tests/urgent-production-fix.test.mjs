@@ -40,6 +40,19 @@ test("festival generation polling tolerates the initial request race", async () 
   assert.match(studio, /window\.clearTimeout\(timer\)/);
 });
 
+test("local API startup loads shared credentials and honors the API port", async () => {
+  const [backendPackage, server] = await Promise.all([
+    read("backend/package.json").then(JSON.parse),
+    read("backend/server.mjs"),
+  ]);
+  assert.equal(
+    backendPackage.scripts.start,
+    "node --env-file-if-exists=../.env.local --env-file-if-exists=.env server.mjs",
+  );
+  assert.match(server, /port=Number\(process\.env\.PORT\|\|4000\)/);
+  assert.match(server, /app\.post\("\/api\/admin\/resources\/upload"/);
+});
+
 test("transparent home header removes the logo card without global image hacks", async () => {
   const header = await read("app/content-image-sizing.css");
   assert.match(

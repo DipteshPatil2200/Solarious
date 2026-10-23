@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "node --check server.mjs && node --check db.mjs && node --check scripts/migrate-local-mongodb-to-atlas.mjs && node --check scripts/migrate-production-cms.mjs && node --check scripts/smoke-test.mjs",
-    "start": "node --env-file-if-exists=.env server.mjs",
+    "start": "node --env-file-if-exists=../.env.local --env-file-if-exists=.env server.mjs",
     "test": "node --test services/*.test.mjs",
     "test:smoke": "node --env-file-if-exists=.env scripts/smoke-test.mjs",
     "migrate:d1": "node scripts/import-d1-export.mjs",
