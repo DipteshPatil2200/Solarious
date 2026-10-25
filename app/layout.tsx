@@ -34,7 +34,7 @@ const baseMetadata: Metadata = {
     "Explore Solarious Energy solar module technologies, manufacturing capabilities and project support.",
   icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.solariousenergy.in",
+    process.env.NEXT_PUBLIC_SITE_URL || "https://www.solariousenergy.com",
   ),
   openGraph: {
     type: "website",
