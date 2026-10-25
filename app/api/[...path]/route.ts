@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { backendApiUrl } from "@/lib/server-config";
+import { backendApiUrl, trustedFrontendOrigins } from "@/lib/server-config";
 
 const methodsWithBody = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const creativeTimeoutMs = 115_000;
@@ -16,13 +16,13 @@ async function forward(request: Request, { params }: { params: Promise<{ path: s
 
   const { path } = await params;
   const pathname = `/api/${path.join("/")}`;
-  const requestUrl = new URL(request.url);
   const isAdminMutation = pathname.startsWith("/api/admin/") && methodsWithBody.has(request.method);
   const origin = request.headers.get("origin");
-  if (isAdminMutation && origin && origin !== requestUrl.origin) {
+  const trustedOrigins = trustedFrontendOrigins();
+  if (isAdminMutation && origin && !trustedOrigins.has(origin)) {
     return NextResponse.json({ error: "Cross-origin admin request denied." }, { status: 403 });
   }
-  const target = new URL(`${pathname}${requestUrl.search}`, base);
+  const target = new URL(`${pathname}${new URL(request.url).search}`, base);
   const isCreativeGeneration =
     request.method === "POST" &&
     (pathname === "/api/admin/creatives" ||
@@ -36,7 +36,7 @@ async function forward(request: Request, { params }: { params: Promise<{ path: s
   headers.delete("host");
   headers.delete("content-length");
   headers.delete("authorization");
-  // The browser request has already passed a strict same-origin check above.
+  // The browser request has already passed the configured trusted-origin check above.
   // This is now a trusted server-to-server hop, so do not make the backend CORS
   // allowlist depend on every Vercel preview or custom frontend hostname.
   headers.delete("origin");

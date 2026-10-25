@@ -7,6 +7,7 @@ Copy `.env.example` to `.env.local` for the Next.js app and `backend/.env.exampl
 | `BACKEND_API_URL` | Frontend server | Yes | HTTPS origin for server-side API forwarding and admin sign-in. No `/api` suffix. | `lib/server-config.ts`, API routes |
 | `VITE_API_URL` | Frontend server | Optional | Backward-compatible fallback for `BACKEND_API_URL`. | `lib/server-config.ts` |
 | `NEXT_PUBLIC_SITE_URL` | Frontend/public | Yes in production | Canonical public site URL for metadata, sitemap, and robots. | `app/layout.tsx`, `app/sitemap.ts`, `app/robots.ts` |
+| `FRONTEND_ORIGINS` | Frontend server | Required for admin proxy writes in production | Comma-separated canonical browser origins trusted by the Next API proxy. Do not derive this from Host headers. | `app/api/[...path]/route.ts`, `lib/server-config.ts` |
 | `CRON_SECRET` | Frontend server and backend | Yes when reports are scheduled | Shared bearer secret for the Vercel cron forwarding route and backend report endpoint. | `app/api/cron/enquiry-report/route.ts`, `backend/server.mjs` |
 | `MONGODB_URI` | Backend | Yes | MongoDB/Atlas connection URI. | `backend/db.mjs`, server startup and migration |
 | `DB_NAME` | Backend | Optional | Database name; defaults to `solarious`. | `backend/db.mjs`, migrations |

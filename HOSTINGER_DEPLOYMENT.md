@@ -6,8 +6,8 @@ Deploy two separate Node.js web apps from the same repository:
 
 | App | Domain | Repository root | Build | Start |
 | --- | --- | --- | --- | --- |
-| Next.js frontend | `www.your-domain.example` | repository root | `npm ci && npm run build` | `npm start` |
-| Express API | `api.your-domain.example` | `backend` | `npm ci && npm run build` | `npm start` |
+| Next.js frontend | `www.solariousenergy.com` | repository root | `npm ci && npm run build` | `npm start` |
+| Express API | `api.solariousenergy.com` | `backend` | `npm ci && npm run build` | `npm start` |
 
 Use Node.js **22.x** for both apps. Hostinger documents Node.js 22 support for eligible Node.js web apps. Do not set a fixed port: both apps already honor Hostinger's `PORT` value.
 
@@ -18,8 +18,9 @@ This requires an hPanel plan that includes at least two Node.js websites. Confir
 Configure in the frontend Node.js app:
 
 ```dotenv
-BACKEND_API_URL=https://api.your-domain.example
-NEXT_PUBLIC_SITE_URL=https://www.your-domain.example
+BACKEND_API_URL=https://api.solariousenergy.com
+NEXT_PUBLIC_SITE_URL=https://www.solariousenergy.com
+FRONTEND_ORIGINS=https://www.solariousenergy.com,https://solariousenergy.com
 CRON_SECRET=the-same-long-random-value-as-the-api
 ```
 
@@ -33,7 +34,7 @@ Configure in the API Node.js app:
 NODE_ENV=production
 MONGODB_URI=mongodb+srv://...
 DB_NAME=solarious
-FRONTEND_ORIGINS=https://www.your-domain.example,https://your-domain.example
+FRONTEND_ORIGINS=https://www.solariousenergy.com,https://solariousenergy.com
 ADMIN_USERNAME=...
 ADMIN_PASSWORD=...
 CLOUDINARY_URL=cloudinary://...
@@ -50,7 +51,7 @@ Add `IMAGE_*`, `APINEX_*`, and `EMAIL_*` only for the corresponding enabled serv
 3. Add the environment variables above in hPanel, never in Git.
 4. Attach HTTPS domains: `www` to the frontend and `api` to the backend. Redirect the apex domain to `www` or include it in frontend routing and the API CORS allow-list.
 5. In MongoDB Atlas, allow the Hostinger application's outbound network access by the method available for your Atlas plan. Use a least-privilege database user.
-6. Deploy the API, then visit `https://api.your-domain.example/api/health`. It should show a connected database before deploying the frontend.
+6. Deploy the API, then visit `https://api.solariousenergy.com/api/health`. It should show a connected database before deploying the frontend.
 7. Deploy the frontend, then test the public site, `/admin` sign-in, API-backed forms, uploads, and a nested-route refresh.
 8. Configure the weekly-report schedule in Hostinger Cron Jobs after confirming the exact deployed path and secret. Hostinger's cron environment and command paths must be copied from hPanel; do not reuse the Vercel cron configuration.
 

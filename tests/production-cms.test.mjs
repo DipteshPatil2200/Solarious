@@ -80,7 +80,7 @@ test("festival studio uses validated image generation and supported aspect ratio
 
 test("admin mutations enforce same-origin CSRF before the trusted backend hop", async () => {
   const proxy = await read("app/api/[...path]/route.ts");
-  assert.match(proxy, /isAdminMutation && origin && origin !== requestUrl\.origin/);
+  assert.match(proxy, /isAdminMutation && origin && !trustedOrigins\.has\(origin\)/);
   assert.match(proxy, /Cross-origin admin request denied/);
   assert.match(proxy, /headers\.delete\("origin"\)/);
   assert.match(proxy, /revalidatePath\("\/", "layout"\)/);
